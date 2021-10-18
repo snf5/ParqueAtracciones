@@ -41,7 +41,7 @@ import org.bson.conversions.Bson;
 import javax.print.Doc;
 
 
-public class FWQ_WaitingTimeServer {
+public class fff {
 
     public String funciona = "";
 
@@ -104,7 +104,7 @@ public class FWQ_WaitingTimeServer {
 
         try{
 
-            FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
+            fff fwq = new fff();
 
 
             if(args.length < 3){
@@ -152,14 +152,11 @@ public class FWQ_WaitingTimeServer {
     }
 
 
-    public static String consumidor(String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq){
+    public static String consumidor(String hostKafka, String puertoKafka, fff fwq){
 
         Properties proper = new Properties();
 
         String datos = "";
-
-        String id = "", nuevoTiempo = "";
-        String[] informacion ;
 
         datos += hostKafka;
         datos += ":";
@@ -172,75 +169,41 @@ public class FWQ_WaitingTimeServer {
         proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.GROUP_ID_CONFIG, "sensorGroup");
-        proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
-        consumer.subscribe(Collections.singleton("prueba"));
+        consumer.subscribe(Collections.singleton("pruebasensor"));
 
         try{
             while(true) {
                 ConsumerRecords<String, String> records = consumer.poll(100);
 
-                int tiempoCola = 0;
-                String tiempo = "";
+                String id = "", nuevoTiempo = "";
 
                 for (ConsumerRecord<String, String> record : records) {
-                    //System.out.println(record.value().toString());
+                    System.out.println(record.value().toString());
 
                     //CON ESTO SAMOS EL TIEMPO DE ESPERA DE LA ATRACCIÓN
-                    informacion = record.value().toString().split(":");
+                    String[] informacion = record.value().toString().split(":");
 
                     int personas = 0;
-                    nuevoTiempo = "";
 
                     id = informacion[0];
                     personas = Integer.parseInt(informacion[1]);
 
-                    tiempoCola = (int)(calcularCola(id, personas));
-                    tiempo += tiempoCola;
-
                     nuevoTiempo += id;
                     nuevoTiempo += ":";
-                    nuevoTiempo += tiempoCola;
+                    nuevoTiempo += (int)(calcularCola(id, personas));
                     nuevoTiempo += " ";
 
                     System.out.println(nuevoTiempo);
 
                 }
-
-                //REPASAR EL MAP PARA PASARSELO A ENGINE
-
-                if(nuevoTiempo != "") {
-
-                    if (map.isEmpty()) {
-                        map.put(id, tiempo);
-                    } else {
-                        int num = 0;
-                        for (Map.Entry entry : map.entrySet()) {
-                            if (entry.getKey() == id) {
-                                //map.replace(id, tiempo);
-                                num = 1;
-                            } else {
-                                //map.put(id, tiempo);
-                                num =  2;
-                            }
-                        }
-
-                        if(num == 1){
-                            map.replace(id, tiempo);
-                        }else if(num == 2){
-                            map.put(id, tiempo);
-                        }
-                    }
-
-                    System.out.println(map);
-                    nuevoTiempo = "";
-                }
-
                 /*
                 System.out.println("holaaa");
                 map.put(id, nuevoTiempo);
                 System.out.println(map);
+
                  */
             }
 

@@ -8,12 +8,17 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
+import Formularios.Registrar;
 import com.mongodb.MongoClient;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 
 public class Menu {
@@ -22,7 +27,10 @@ public class Menu {
     private static String contra = "";
     private static String aliasUsu = "";
 
-    private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka;
+    private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka, gestorColas;
+
+    private static Inicio login;
+    private static Registrar miRegistrar;
 
     public static void main(String args[]){
 
@@ -38,21 +46,41 @@ public class Menu {
         hostRegistry = args[0];
         puertoRegistry = args[1];
 
-        //hostKafka = args[2];
-        //puertoKafka = args[3];
+        hostKafka = args[2];
+        puertoKafka = args[3];
+
+        gestorColas = hostKafka + ":" + puertoKafka;
 
         System.out.println(hostRegistry);
 
-        Inicio login = new Inicio();
+        login = new Inicio();
         login.setVisible(true);
 
         //comprobar que el registro se hizo correctamente
+        //para ello el registry me debe devolver por socket
+        //una confirmación
+
+        /*
+        topic:
+        - credenciales
+        - posicion
+        - devolver mapa
+         */
+
+        /*
+        para realizar el inicio de sesión tengo que invocar al productor del topic entrarParque
+        para mandar información a engine
+
+        el consumidor que es engine devolverá un mensaje de si esta registrado o no y le devuelve un id de sesion
+
+        si no esta registrado se iniciará la pagina de registro
+
+        Productor para enviar datos de credenciales a engine
+        Consumidor para recibir el mapa (en caso de que no este registrado, engine enviará mediante su productor un ko)
+        Productor para ir madnando a engine sus movimientos y que los actualice en el mapa
 
 
-
-        //comprobar que la modificacion se hizo correctamente
-
-
+         */
 
 
     }
@@ -86,6 +114,28 @@ public class Menu {
         }
 
 
+
+    }
+
+    //productor que envia a traves de topiccredenciales
+    public static void productorCredenciales(String usuario, String contra){
+
+        boolean entrar = false;
+
+        Properties proper = new Properties();
+
+        String credenciales = usuario + ":" + contra;
+
+        proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,gestorColas);
+        proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        proper.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
+
+        productor.send(new ProducerRecord<String, String>("topiccredenciales", "keyA", credenciales));
+
+        productor.flush();
+        productor.close();
 
     }
 

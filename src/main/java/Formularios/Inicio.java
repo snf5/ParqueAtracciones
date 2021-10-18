@@ -73,6 +73,9 @@ public class Inicio extends JFrame {
     }
 
     private void entrarParque(ActionEvent e){
+        test.Menu probando = new Menu();
+
+        probando.productorCredenciales(txtUsuario.getText(), txtContra.getText());
 
     }
 
@@ -80,8 +83,6 @@ public class Inicio extends JFrame {
 
         Registrar miRegistrar = new Registrar();
         miRegistrar.setVisible(true);
-
-
 
     }
 
