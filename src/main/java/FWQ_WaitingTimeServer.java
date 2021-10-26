@@ -20,10 +20,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Filters.eq;
@@ -46,8 +43,6 @@ public class FWQ_WaitingTimeServer {
     public String funciona = "";
 
     public static Map<String, String> map = new HashMap<>();
-
-
 
     public String leeSocket (Socket p_sk, String p_datos){
         try{
@@ -100,12 +95,8 @@ public class FWQ_WaitingTimeServer {
 
         int verificacion = 0;
 
-
-
         try{
-
             FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
-
 
             if(args.length < 3){
                 System.out.println("Debe indicar el puerto de escucha del servidor.");
@@ -119,7 +110,6 @@ public class FWQ_WaitingTimeServer {
 
                 consumidor(hostKafka, puertoKafka, fwq);
 
-
                 ServerSocket skServidor = new ServerSocket(Integer.parseInt(puerto));
                 System.out.println("Escucho el puerto " + puerto);
 
@@ -130,11 +120,9 @@ public class FWQ_WaitingTimeServer {
                         Cadena = fwq.leeSocket(skCliente, Cadena);
 
                         verificacion = fwq.tiemposEspera(Cadena);
-                        fwq.escribeSocket(skCliente, fwq.funciona);
+                        fwq.escribeSocket(skCliente, map.toString());
                     }
-
                     //mirarlo bien
-
                     int j = 0;
                     if(j == -1){
                         skCliente.close();
@@ -151,7 +139,7 @@ public class FWQ_WaitingTimeServer {
 
     }
 
-
+    //consumidor que va recibiendo de los sensore slos datos de personas de cada atraccion
     public static String consumidor(String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq){
 
         Properties proper = new Properties();
@@ -209,7 +197,6 @@ public class FWQ_WaitingTimeServer {
                 }
 
                 //REPASAR EL MAP PARA PASARSELO A ENGINE
-
                 if(nuevoTiempo != "") {
 
                     if (map.isEmpty()) {
@@ -252,6 +239,8 @@ public class FWQ_WaitingTimeServer {
     }
 
 
+    //calucla el tiempo de espera de cada atracción segun el numero de personas
+    //recibidas a traves de los sensores
     public static double calcularCola(String id, int personas){
 
         double  encola = 0, calculo = 0, tiempo = 0,  mins = 0;
@@ -267,6 +256,17 @@ public class FWQ_WaitingTimeServer {
         MongoCollection<Document> col = db.getCollection("Sensor");
 
         FindIterable<Document> docum = col.find(eq("id", id));
+
+
+        //parte de engine
+        MongoCollection<Document> cola = db.getCollection("Atraccion");
+
+        FindIterable<Document> documm = cola.find();
+
+        for(Document documennt : documm){
+            System.out.println(documennt.get("ubicacion").toString());
+        }
+
 
         for (Document document : docum) {
             visi = document.get("visitantes").toString();

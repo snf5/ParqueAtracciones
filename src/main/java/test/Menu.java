@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Properties;
 
 import Formularios.Registrar;
@@ -17,6 +18,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -26,8 +28,11 @@ public class Menu {
     private static String usu = "";
     private static String contra = "";
     private static String aliasUsu = "";
+    private static String id = "";
 
     private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka, gestorColas;
+
+    private static String datosUsu = "";
 
     private static Inicio login;
     private static Registrar miRegistrar;
@@ -51,10 +56,15 @@ public class Menu {
 
         gestorColas = hostKafka + ":" + puertoKafka;
 
-        System.out.println(hostRegistry);
+        //System.out.println(hostRegistry);
 
         login = new Inicio();
         login.setVisible(true);
+
+        //comprobamos que las credenciales son buenas
+
+
+
 
         //comprobar que el registro se hizo correctamente
         //para ello el registry me debe devolver por socket
@@ -85,7 +95,68 @@ public class Menu {
 
     }
 
-    public void consumir(){
+    //recibo y guardo los datos del usuario para
+    //ya desde aqui ir llamando al resto de modulos para que se lleve a cabo todo
+    public void recibirDatos(String usuario, String contra){
+
+        String entradaParque = "";
+
+        String posicion = "1:1";
+
+        datosUsu = usuario + ":" + contra;
+        //en datosUsu ya tengo usuario:contra
+
+        System.out.println("si que me llega");
+        System.out.println(datosUsu);
+
+        if(usuario.equals("jj")){
+            System.out.println("bieen");
+        }else{
+            System.out.println("errorrrrr");
+        }
+
+
+
+        //le paso a productorCredenciales el usuario y contraseña y
+        //luego tengo que llamar a consumir para recibir el OK!
+
+        //entradaParque = productorCredenciales(usuario, contra, posicion);
+
+        //entradaParque va a recibir id:mapa entero o ko:0
+        //hacemos split para comprobar si ha podido entrar en el parque o no
+
+        String informacion[] = entradaParque.split(":");
+
+        //informacion[0] es id/ko
+        //informacion[1] es mapaAtracciones/0
+        //informacion[2] es mapaJugadores/0 ESTO PODRIA SERVIR PARA AHORRAR EL COMPROBAR SI ES JUGADOR O ATRACCION????
+        if(informacion[0].equals("ko")){
+            //no puede entrar al parque hasta o que se registre o meta bien los datos
+
+        }else{
+            //se puede entrar al parque y llamamos a prodcutor y consumidor
+            //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
+
+            //aqui igualo id a informacion[0], para saber que id tiene cada jugador
+
+
+            //le paso informacion[1], que es el mapa para que sepa donde esta y cual es su destino
+            //OJOOOOO recibo un map de las posiciones ocupadas
+
+            String quitar = informacion[1].substring(1, informacion[1].length()-1);
+
+            //le paso la cadena tal que asi: shambala=12, estampida=10, j1=0204
+            //y al hacer por ahi lo de [] me va sacando shamabal=12 ...
+            moverse(quitar);
+        }
+
+
+    }
+
+
+    //los dos metodos de aqui abajo son para poder entrar al parque
+    //consumidor que recibe por parte de engine la confirmación de acceso al parque
+    public static String consumir(){
 
 
         Properties proper = new Properties();
@@ -93,38 +164,39 @@ public class Menu {
         String datos = hostKafka + puertoKafka;
 
         //añadir el grupo de consumidores de solo visitantes
-
         proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, datos);
         proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        proper.put(ConsumerConfig.GROUP_ID_CONFIG, "testGroup");
+        proper.put(ConsumerConfig.GROUP_ID_CONFIG, "visitanteGroup"); //otro grupo???
         proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
-        consumer.subscribe(Collections.singleton("parque1"));
+        consumer.subscribe(Collections.singleton("acceso"));
 
-        long count = 0L;
-        while(count < 100){
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
+        ConsumerRecords<String, String> records = consumer.poll(100);
 
-            for(ConsumerRecord<String, String> record : records){
-                System.out.println("MSG: " + record.toString());
-                count++;
-            }
+        for (ConsumerRecord<String, String> record : records) {
+
+            //el productor me tiene que devolver
+            //informacion = record.value().toString().split(":");
         }
 
-
+        return "false";
 
     }
 
     //productor que envia a traves de topiccredenciales
-    public static void productorCredenciales(String usuario, String contra){
+    //para que engine compruebe los datos del usuario
+    //usuario:contra
+    public static String productorCredenciales(String usuario, String contra, String posicion){
 
         boolean entrar = false;
 
+        String acceso = "";
+
         Properties proper = new Properties();
 
-        String credenciales = usuario + ":" + contra;
+        String credenciales = usuario + ":" + contra + ":" + posicion;
 
         proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,gestorColas);
         proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -137,8 +209,100 @@ public class Menu {
         productor.flush();
         productor.close();
 
+        System.out.println("yeeeeeee");
+
+        acceso = consumir();
+
+        return acceso;
     }
 
+    public void elegirDestino(){
+
+    }
+
+    public String comprobarCasilla(int i, int j, String mapa){
+
+        String casilla = "";
+
+        //recorrer el mapa para saber si hay algo en esa casilla y mostrarlo y sino mostrar punto
+
+        return casilla;
+    }
+
+
+    public void moverse(String mapa){
+
+        String casilla = "";
+
+        //LOGICAAAAAAA
+
+        for(int i = 0;i < 20; i++){
+            for(int j = 0;j < 20; j++){
+                casilla = comprobarCasilla(i, j, mapa);
+                System.out.print(casilla);
+            }
+            System.out.println();
+        }
+
+
+    }
+
+
+
+    //consumidor que va recibiendo el mapa para mostrarlo
+    //a través del topic devolverMapa
+    public static void consumidorMapa() {
+
+        Properties proper = new Properties();
+
+        String datos = "";
+
+        String id = "", nuevoTiempo = "";
+        String[] informacion;
+
+        datos += hostKafka;
+        datos += ":";
+        datos += puertoKafka;
+
+        System.out.println(datos);
+
+        proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, datos);
+        proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        proper.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        proper.put(ConsumerConfig.GROUP_ID_CONFIG, "sensorGroup");
+        proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
+        consumer.subscribe(Collections.singleton("devolverMapa"));
+
+
+        try{
+            while(true) {
+                ConsumerRecords<String, String> records = consumer.poll(100);
+
+                //me va a devolver una matriz
+                //la tengo que representar en un mapa
+
+                for (ConsumerRecord<String, String> record : records) {
+                    //record.value().toString();
+                }
+
+            }
+
+
+                }finally{
+            consumer.close();
+        }
+
+    }
+
+    public void mostrarMapa(){
+
+    }
+
+    //todo listo
+    //esta es la parte que se comunica con registry
+    //faltaria revisar el modificar el usuario
     public static Boolean registrar(String alias, String usuario, String contrasenya){
 
         aliasUsu = alias;
@@ -178,6 +342,17 @@ public class Menu {
             OutputStream aux = p_sk.getOutputStream();
             DataOutputStream flujo = new DataOutputStream(aux);
             flujo.writeUTF(datos);
+
+            /*
+            HashMap<String, String> mapa = new HashMap<>();
+
+            mapa.put("shambala", "10000");
+            mapa.put("yeeey", "34");
+            mapa.put("fnbibwf", "334");
+
+            flujo.writeUTF(mapa.toString());
+            */
+
 
         }catch(Exception e){
 

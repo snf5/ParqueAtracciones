@@ -19,6 +19,11 @@ public class Inicio extends JFrame {
     private JButton entrar;
     private JButton registrar;
 
+    private boolean todoBien = false;
+
+
+    private static Registrar miRegistrar;
+
     //constructor
     public Inicio(){
             setTitle("Bienvenido al parque");
@@ -73,15 +78,19 @@ public class Inicio extends JFrame {
     }
 
     private void entrarParque(ActionEvent e){
+
         test.Menu probando = new Menu();
 
-        probando.productorCredenciales(txtUsuario.getText(), txtContra.getText());
+        if(txtUsuario.getText() != "" && txtContra.getText() != "") {
+            probando.recibirDatos(txtUsuario.getText(), txtContra.getText());
+            todoBien = true;
+        }
 
     }
 
     private void registrarParque(ActionEvent e){
 
-        Registrar miRegistrar = new Registrar();
+        miRegistrar = new Registrar();
         miRegistrar.setVisible(true);
 
     }
@@ -89,4 +98,11 @@ public class Inicio extends JFrame {
     public JTextField textoUsuario(){
         return txtUsuario;
     }
+
+    public JTextField textoContra(){return txtContra;}
+
+    public  boolean textTodoBien(){return todoBien;}
+
+
+    public Registrar miRegistro(){return miRegistrar;}
 }

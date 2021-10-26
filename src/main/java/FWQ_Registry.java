@@ -5,8 +5,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 import java.awt.*;
 import java.io.DataInputStream;
@@ -16,6 +15,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FWQ_Registry {
     public String leeSocket(Socket p_sk, String p_datos) {
@@ -51,11 +51,10 @@ public class FWQ_Registry {
         Document docu = new Document("Alias", alias).append("Nombre", nombre).append("Contrasenya", contra);
 
         col.insertOne(docu);
-
-
     }
 
     public int formulario(String p_Cadena) {
+
         String[] informacion = p_Cadena.split(", ");
         String ID = "";
         String nombre = "";
@@ -80,6 +79,18 @@ public class FWQ_Registry {
 
             return 1;
         }
+
+         /*
+        System.out.println(p_Cadena);
+
+        String quitar = p_Cadena.substring(1, p_Cadena.length()-1);
+        System.out.println(quitar);
+
+        String[] informacion = quitar.split(", ");
+        System.out.println(informacion[0]);
+
+
+         */
 
     }
 
@@ -106,7 +117,7 @@ public class FWQ_Registry {
                 ServerSocket skServidor = new ServerSocket(Integer.parseInt(puerto));
                 System.out.println("Escucho el puerto " + puerto);
 
-                int j = 0;
+
                 for (; ; ) {
                     Socket skCliente = skServidor.accept();
                     System.out.println("Sirviendo cliente...");
