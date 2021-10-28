@@ -42,13 +42,14 @@ public class FWQ_Registry {
 
     public  void insertarUsuario(String alias, String nombre, String contra){
 
-        MongoClient client = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
+        MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
+        MongoClient client = MongoClients.create("mongodb://localhost:27017");
 
-        MongoDatabase db = client.getDatabase("Parque");
+        MongoDatabase db = client.getDatabase("parque");
 
-        MongoCollection col = db.getCollection("Usuario");
+        MongoCollection col = db.getCollection("usuario");
 
-        Document docu = new Document("Alias", alias).append("Nombre", nombre).append("Contrasenya", contra);
+        Document docu = new Document("alias", alias).append("nombre", nombre).append("contrasenya", contra);
 
         col.insertOne(docu);
     }

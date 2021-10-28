@@ -28,7 +28,11 @@ public class Menu {
     private static String usu = "";
     private static String contra = "";
     private static String aliasUsu = "";
+
+    //datos para ir pasandole a engine
     private static String id = "";
+    private static String destino = "";
+    private static String posicion = "";
 
     private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka, gestorColas;
 
@@ -56,15 +60,8 @@ public class Menu {
 
         gestorColas = hostKafka + ":" + puertoKafka;
 
-        //System.out.println(hostRegistry);
-
         login = new Inicio();
         login.setVisible(true);
-
-        //comprobamos que las credenciales son buenas
-
-
-
 
         //comprobar que el registro se hizo correctamente
         //para ello el registry me debe devolver por socket
@@ -73,6 +70,7 @@ public class Menu {
         /*
         topic:
         - credenciales
+        - acceso
         - posicion
         - devolver mapa
          */
@@ -101,7 +99,7 @@ public class Menu {
 
         String entradaParque = "";
 
-        String posicion = "1:1";
+        String posicion = "01:01";
 
         datosUsu = usuario + ":" + contra;
         //en datosUsu ya tengo usuario:contra
@@ -120,7 +118,7 @@ public class Menu {
         //le paso a productorCredenciales el usuario y contraseña y
         //luego tengo que llamar a consumir para recibir el OK!
 
-        //entradaParque = productorCredenciales(usuario, contra, posicion);
+        entradaParque = productorCredenciales(usuario, contra, posicion);
 
         //entradaParque va a recibir id:mapa entero o ko:0
         //hacemos split para comprobar si ha podido entrar en el parque o no
@@ -129,7 +127,6 @@ public class Menu {
 
         //informacion[0] es id/ko
         //informacion[1] es mapaAtracciones/0
-        //informacion[2] es mapaJugadores/0 ESTO PODRIA SERVIR PARA AHORRAR EL COMPROBAR SI ES JUGADOR O ATRACCION????
         if(informacion[0].equals("ko")){
             //no puede entrar al parque hasta o que se registre o meta bien los datos
 
@@ -158,10 +155,10 @@ public class Menu {
     //consumidor que recibe por parte de engine la confirmación de acceso al parque
     public static String consumir(){
 
-
         Properties proper = new Properties();
 
         String datos = hostKafka + puertoKafka;
+        String mapa = "";
 
         //añadir el grupo de consumidores de solo visitantes
         proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, datos);
@@ -179,9 +176,10 @@ public class Menu {
 
             //el productor me tiene que devolver
             //informacion = record.value().toString().split(":");
+            mapa = record.value().toString();
         }
 
-        return "false";
+        return mapa;
 
     }
 
@@ -216,7 +214,34 @@ public class Menu {
         return acceso;
     }
 
-    public void elegirDestino(){
+    public void elegirDestino(String mapa){
+
+        Boolean noEncuentro = false;
+        int elegir = 0, longitud = 0, tiempo = 0;
+        String[] mirar;
+
+        //aqui tengo que rellenar las propiedades de destino
+        //50=5:5, 40=3:3, 15=7:14;
+
+        String[] elMapa = mapa.split(", ");
+        longitud = elMapa.length;
+
+        while(noEncuentro == false){
+            elegir = (int)(Math.random()*longitud);
+
+            mirar = elMapa[elegir].split("=");
+            //mirar[0] = 60
+            //mirar[1] = 5:5
+            tiempo = Integer.parseInt(mirar[0]);
+            if(tiempo <= 60){
+                //elegimos esa atracción
+
+                //y añadimos el destino a nuesta variable destino
+            }
+
+        }
+
+
 
     }
 
@@ -236,6 +261,27 @@ public class Menu {
 
         //LOGICAAAAAAA
 
+        //en mapa tengo
+        // shambala=10, fiurius=5, j1=1005
+
+        //una vez tengo esto tengo que elegir destino
+        elegirDestino(mapa);
+
+        //una vez elegido el destino, tengo que calcular el recorrido
+
+        System.out.println("****** Fun with queues PortAventura ******");
+        System.out.println("    ID      Nombre      Pos     Destino");
+        //hacer un for y recorrer tantas veces como visitantes hayan
+
+
+        //hay que mostrar los datos de todos los jugadores
+
+        for(int i2 = 0;i2 < 20; i2++){
+            System.out.println(i2+1 + " ");
+        }
+        System.out.println();
+
+        //mostrar mapa
         for(int i = 0;i < 20; i++){
             for(int j = 0;j < 20; j++){
                 casilla = comprobarCasilla(i, j, mapa);

@@ -167,6 +167,7 @@ public class FWQ_WaitingTimeServer {
 
         try{
             while(true) {
+
                 ConsumerRecords<String, String> records = consumer.poll(100);
 
                 int tiempoCola = 0;
@@ -249,23 +250,25 @@ public class FWQ_WaitingTimeServer {
 
         System.out.println("Personas: " + personas);
 
-        MongoClient client = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
+        MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
+        MongoClient client = MongoClients.create("mongodb://localhost:27017");
 
-        MongoDatabase db = client.getDatabase("Parque");
+        MongoDatabase db = client.getDatabase("parque");
 
-        MongoCollection<Document> col = db.getCollection("Sensor");
+        MongoCollection<Document> col = db.getCollection("sensor");
 
         FindIterable<Document> docum = col.find(eq("id", id));
 
-
         //parte de engine
-        MongoCollection<Document> cola = db.getCollection("Atraccion");
+       // MongoCollection<Document> cola = db.getCollection("Atraccion");
 
-        FindIterable<Document> documm = cola.find();
+        //FindIterable<Document> documm = cola.find();
 
+        /*
         for(Document documennt : documm){
             System.out.println(documennt.get("ubicacion").toString());
         }
+         */
 
 
         for (Document document : docum) {
