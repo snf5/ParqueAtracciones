@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Stack;
 
 import Formularios.Registrar;
 import com.mongodb.MongoClient;
@@ -23,8 +24,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 
-public class Menu {
+public class FWQ_Visitor {
 
+    //
     private static String usu = "";
     private static String contra = "";
     private static String aliasUsu = "";
@@ -33,7 +35,9 @@ public class Menu {
     private static String id = "";
     private static String destino = "";
     private static String posicion = "";
+    private  static String x = "", y = "";
 
+    //datos para la conexión de los puertos e ips
     private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka, gestorColas;
 
     private static String datosUsu = "";
@@ -120,7 +124,7 @@ public class Menu {
 
         entradaParque = productorCredenciales(usuario, contra, posicion);
 
-        //entradaParque va a recibir id:mapa entero o ko:0
+        //entradaParque va a recibir id:mapa entero Atracciones o ko:0
         //hacemos split para comprobar si ha podido entrar en el parque o no
 
         String informacion[] = entradaParque.split(":");
@@ -135,13 +139,13 @@ public class Menu {
             //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
 
             //aqui igualo id a informacion[0], para saber que id tiene cada jugador
+            id = informacion[0];
 
 
             //le paso informacion[1], que es el mapa para que sepa donde esta y cual es su destino
-            //OJOOOOO recibo un map de las posiciones ocupadas
+            //OJOOOOO recibo un map de las posiciones ocupadas de las atracciones
 
             String quitar = informacion[1].substring(1, informacion[1].length()-1);
-
             //le paso la cadena tal que asi: shambala=12, estampida=10, j1=0204
             //y al hacer por ahi lo de [] me va sacando shamabal=12 ...
             moverse(quitar);
@@ -157,11 +161,10 @@ public class Menu {
 
         Properties proper = new Properties();
 
-        String datos = hostKafka + puertoKafka;
         String mapa = "";
 
         //añadir el grupo de consumidores de solo visitantes
-        proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, datos);
+        proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, gestorColas);
         proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.GROUP_ID_CONFIG, "visitanteGroup"); //otro grupo???
@@ -214,11 +217,13 @@ public class Menu {
         return acceso;
     }
 
+
+    //una vez entro al parque me empiezo a mover
     public void elegirDestino(String mapa){
 
-        Boolean noEncuentro = false;
+        Boolean encuentro = false;
         int elegir = 0, longitud = 0, tiempo = 0;
-        String[] mirar;
+        String[] mirar, xey;
 
         //aqui tengo que rellenar las propiedades de destino
         //50=5:5, 40=3:3, 15=7:14;
@@ -226,7 +231,7 @@ public class Menu {
         String[] elMapa = mapa.split(", ");
         longitud = elMapa.length;
 
-        while(noEncuentro == false){
+        while(encuentro == false){
             elegir = (int)(Math.random()*longitud);
 
             mirar = elMapa[elegir].split("=");
@@ -235,29 +240,49 @@ public class Menu {
             tiempo = Integer.parseInt(mirar[0]);
             if(tiempo <= 60){
                 //elegimos esa atracción
-
+                encuentro = true;
                 //y añadimos el destino a nuesta variable destino
+                destino = mirar[1];
+                xey = mirar[1].split(":");
+                x = xey[0];
+                y = xey[1];
             }
-
         }
-
-
-
     }
 
-    public String comprobarCasilla(int i, int j, String mapa){
+    public String comprobarCasilla(String i, String j, String mapa){
 
         String casilla = "";
+        String[] informacion = mapa.split(", ");
+        String[] datos;
+        String[] localizar;
+        boolean encuentro = false;
+        int i2 = 0;
 
+        while(encuentro == false && i2 < informacion.length){
+            //ejemplo 60=5:5
+            //datos[0]=60
+            //datos[1]=5:5
+                //localizar[0]=5
+                //localizar[1]=5
+            datos = informacion[i2].split("=");
+            localizar = datos[1].split(":");
+            if(i == localizar[0] && j == localizar[1]){
+                casilla = datos[0];
+                encuentro = true;
+            }else{
+                casilla = "·";
+            }
+            i2++;
+        }
         //recorrer el mapa para saber si hay algo en esa casilla y mostrarlo y sino mostrar punto
-
         return casilla;
     }
 
 
     public void moverse(String mapa){
 
-        String casilla = "";
+        String casilla = "", mapaEntero = "";
 
         //LOGICAAAAAAA
 
@@ -265,31 +290,73 @@ public class Menu {
         // shambala=10, fiurius=5, j1=1005
 
         //una vez tengo esto tengo que elegir destino
+        //en mapa solo tengo las atracciones
         elegirDestino(mapa);
 
         //una vez elegido el destino, tengo que calcular el recorrido
+        //y le voy pasando a engin mi posicion y mi destino todo el rato
 
+        boolean logOut = false;
+        while(logOut == false){
+
+            //llamo a productor que le paso mi id y mi posicion
+            //en cada iteración voy avanzando
+            productorPosicion(); //envia id:posicion:destino
+
+
+            //recibo mapa y compruebo que mi destino no haya superado 60 mins
+            //y muestro mapa
+            consumidorMapa(); //recibo mapa:mapaJugadores
+
+
+            //una vez hago esto cambio a mi nueva posicion para llegar a mi destino
+
+
+        }
+
+
+
+
+
+        //TODO PARA MOSTRAR EL MAPA
         System.out.println("****** Fun with queues PortAventura ******");
         System.out.println("    ID      Nombre      Pos     Destino");
         //hacer un for y recorrer tantas veces como visitantes hayan
-
-
         //hay que mostrar los datos de todos los jugadores
-
         for(int i2 = 0;i2 < 20; i2++){
             System.out.println(i2+1 + " ");
         }
         System.out.println();
-
         //mostrar mapa
         for(int i = 0;i < 20; i++){
             for(int j = 0;j < 20; j++){
-                casilla = comprobarCasilla(i, j, mapa);
+                casilla = comprobarCasilla(String.valueOf(i), String.valueOf(j), mapaEntero);
                 System.out.print(casilla);
             }
             System.out.println();
         }
 
+
+    }
+
+    public static void productorPosicion(){
+
+        Properties proper = new Properties();
+
+        proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,gestorColas);
+        proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        proper.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
+
+        String informacionPosicion = "";
+
+        informacionPosicion = id + ":" + posicion + ":" + destino;
+
+        productor.send(new ProducerRecord<String, String>("topicPosicion", "keyA", informacionPosicion));
+
+        productor.flush();
+        productor.close();
 
     }
 
@@ -306,13 +373,15 @@ public class Menu {
         String id = "", nuevoTiempo = "";
         String[] informacion;
 
+        /*
         datos += hostKafka;
         datos += ":";
         datos += puertoKafka;
 
         System.out.println(datos);
+         */
 
-        proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, datos);
+        proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, gestorColas);
         proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         proper.put(ConsumerConfig.GROUP_ID_CONFIG, "sensorGroup");

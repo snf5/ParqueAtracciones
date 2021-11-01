@@ -44,6 +44,7 @@ public class FWQ_WaitingTimeServer {
 
     public static Map<String, String> map = new HashMap<>();
 
+
     public String leeSocket (Socket p_sk, String p_datos){
         try{
             InputStream aux = p_sk.getInputStream();
@@ -95,7 +96,7 @@ public class FWQ_WaitingTimeServer {
 
         int verificacion = 0;
 
-        try{
+        //try{
             FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
 
             if(args.length < 3){
@@ -108,8 +109,11 @@ public class FWQ_WaitingTimeServer {
                 hostKafka = args[1];
                 puertoKafka = args[2];
 
-                consumidor(hostKafka, puertoKafka, fwq);
+                consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
 
+                //todo hacer funcion de socket para ir pasandole la informacióny añadir en este metodo un while(true)
+
+                /*
                 ServerSocket skServidor = new ServerSocket(Integer.parseInt(puerto));
                 System.out.println("Escucho el puerto " + puerto);
 
@@ -122,25 +126,62 @@ public class FWQ_WaitingTimeServer {
                         verificacion = fwq.tiemposEspera(Cadena);
                         fwq.escribeSocket(skCliente, map.toString());
                     }
+                    skCliente.close();
                     //mirarlo bien
                     int j = 0;
                     if(j == -1){
-                        skCliente.close();
+
                         System.exit(0);
                     }
 
                 }
-            }
 
+                 */
+            }
+/*
         } catch (IOException e) {
             e.printStackTrace();
         }
+ */
 
+    }
+
+    public void socketDatos(int puerto, FWQ_WaitingTimeServer fwq){
+
+        String Cadena = "";
+
+        try {
+
+            ServerSocket skServidor = new ServerSocket(puerto);
+
+            System.out.println("Escucho el puerto " + puerto);
+
+            for(;;) {
+                Socket skCliente = skServidor.accept();
+                System.out.println("Sirviendo cliente...");
+                //while(verificacion != -1) {
+                    Cadena = fwq.leeSocket(skCliente, Cadena);
+
+                    //verificacion = fwq.tiemposEspera(Cadena);
+                    fwq.escribeSocket(skCliente, map.toString());
+                //}
+                //mirarlo bien
+                int j = 0;
+                if(j == -1){
+                    skCliente.close();
+                    System.exit(0);
+                }
+
+            }
+
+        }catch (IOException e){
+            e.printStackTrace();
+        }
 
     }
 
     //consumidor que va recibiendo de los sensore slos datos de personas de cada atraccion
-    public static String consumidor(String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq){
+    public static String consumidor(String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq, int puerto){
 
         Properties proper = new Properties();
 
@@ -230,6 +271,8 @@ public class FWQ_WaitingTimeServer {
                 map.put(id, nuevoTiempo);
                 System.out.println(map);
                  */
+
+                fwq.socketDatos(puerto, fwq);
             }
 
         }finally {

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FWQ_Registry {
+
     public String leeSocket(Socket p_sk, String p_datos) {
         try{
             InputStream aux = p_sk.getInputStream();

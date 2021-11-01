@@ -1,14 +1,10 @@
 package Formularios;
 
-import test.Menu;
+import test.FWQ_Visitor;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.*;
-import java.awt.*;
-
 
 
 public class Registrar extends JFrame{
@@ -75,7 +71,7 @@ public class Registrar extends JFrame{
 
     private boolean registrarParque(ActionEvent e){
 
-        test.Menu nuevoM = new Menu();
+        FWQ_Visitor nuevoM = new FWQ_Visitor();
 
         if(nuevoM.registrar(txtAlias.getText(),txtUsuario.getText(), txtContra.getText()) == true){
 

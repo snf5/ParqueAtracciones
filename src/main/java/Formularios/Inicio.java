@@ -1,11 +1,10 @@
 package Formularios;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import test.Menu;
+import test.FWQ_Visitor;
 
 public class Inicio extends JFrame {
 
@@ -79,7 +78,7 @@ public class Inicio extends JFrame {
 
     private void entrarParque(ActionEvent e){
 
-        test.Menu probando = new Menu();
+        FWQ_Visitor probando = new FWQ_Visitor();
 
         if(txtUsuario.getText() != "" && txtContra.getText() != "") {
             probando.recibirDatos(txtUsuario.getText(), txtContra.getText());
