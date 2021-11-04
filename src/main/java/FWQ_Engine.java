@@ -32,7 +32,7 @@ public class FWQ_Engine {
     public static HashMap<String, String> mapa = new HashMap<>();
 
 
-    public String leeSocket(Socket p_sk, String p_Datos) {
+    public static String leeSocket(Socket p_sk, String p_Datos) {
         try {
             InputStream aux = p_sk.getInputStream();
             DataInputStream flujo = new DataInputStream(aux);
@@ -44,7 +44,7 @@ public class FWQ_Engine {
         return p_Datos;
     }
 
-    public void escribirSocket(Socket p_sk, String p_Datos) {
+    public static void escribirSocket(Socket p_sk, String p_Datos) {
         try {
             OutputStream aux = p_sk.getOutputStream();
             DataOutputStream flujo = new DataOutputStream(aux);
@@ -237,11 +237,30 @@ public class FWQ_Engine {
             System.exit(1);
         }
 
-        IPBro = args[0];
-        puertoBro = args[1];
+
+
+        //IPBro = args[0];
+        //puertoBro = args[1];
         visit = args[2];
         IPColas = args[3];
         puertoColas = args[4];
+        IPBro = args[3];
+        puertoBro = args[4];
+
+        try {
+            Socket skCliente = new Socket(IPBro, Integer.parseInt(puertoBro));
+
+            escribirSocket(skCliente, "hola");
+
+            String datos = "";
+
+            datos = leeSocket(skCliente, datos);
+
+            System.out.print(datos);
+
+        }catch(Exception e){
+
+        }
 
         HashMap<String, String> ey = new HashMap<>();
         ey.put("joder","quéAsco");

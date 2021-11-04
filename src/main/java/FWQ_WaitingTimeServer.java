@@ -45,7 +45,7 @@ public class FWQ_WaitingTimeServer {
     public static Map<String, String> map = new HashMap<>();
 
 
-    public String leeSocket (Socket p_sk, String p_datos){
+    public static String leeSocket (Socket p_sk, String p_datos){
         try{
             InputStream aux = p_sk.getInputStream();
             DataInputStream flujo = new DataInputStream(aux);
@@ -58,7 +58,7 @@ public class FWQ_WaitingTimeServer {
 
     }
 
-    public void escribeSocket(Socket p_sk, String p_datos){
+    public static void escribeSocket(Socket p_sk, String p_datos){
 
         try {
             OutputStream out = p_sk.getOutputStream();
@@ -111,6 +111,13 @@ public class FWQ_WaitingTimeServer {
 
                 consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
 
+                while(true){
+                    consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
+                    if(!map.isEmpty()) {
+                        socketDatos(hostKafka, puertoKafka, fwq,Integer.parseInt(puerto));
+                    }
+                }
+
                 //todo hacer funcion de socket para ir pasandole la informacióny añadir en este metodo un while(true)
 
                 /*
@@ -146,37 +153,40 @@ public class FWQ_WaitingTimeServer {
 
     }
 
-    public void socketDatos(int puerto, FWQ_WaitingTimeServer fwq){
+    public static void socketDatos(String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq,int puerto){
 
         String Cadena = "";
 
-        try {
 
-            ServerSocket skServidor = new ServerSocket(puerto);
+            try {
 
-            System.out.println("Escucho el puerto " + puerto);
+                ServerSocket skServidor = new ServerSocket(puerto);
 
-            for(;;) {
-                Socket skCliente = skServidor.accept();
-                System.out.println("Sirviendo cliente...");
-                //while(verificacion != -1) {
-                    Cadena = fwq.leeSocket(skCliente, Cadena);
+                System.out.println("Escucho el puerto " + puerto);
 
-                    //verificacion = fwq.tiemposEspera(Cadena);
-                    fwq.escribeSocket(skCliente, map.toString());
-                //}
-                //mirarlo bien
-                int j = 0;
-                if(j == -1){
+                for (;;) {
+                    Socket skCliente = skServidor.accept();
+                    System.out.println("Sirviendo cliente...");
+                    int i = 0;
+                    while(i != -1) {
+                        Cadena = leeSocket(skCliente, Cadena);
+
+                        //verificacion = fwq.tiemposEspera(Cadena);
+                        escribeSocket(skCliente, map.toString());
+                        i=-1;
+                        consumidor(hostKafka, puertoKafka, fwq,puerto);
+                    }
+                    //mirarlo bien
+
                     skCliente.close();
-                    System.exit(0);
+                    //System.exit(0);
+
                 }
 
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-        }catch (IOException e){
-            e.printStackTrace();
-        }
 
     }
 
@@ -207,9 +217,19 @@ public class FWQ_WaitingTimeServer {
         consumer.subscribe(Collections.singleton("prueba"));
 
         try{
-            while(true) {
+            //while(true) {
+
+                System.out.println("aqui estoy");
 
                 ConsumerRecords<String, String> records = consumer.poll(100);
+
+                //todo
+                int fre = 0;
+
+                if(!map.isEmpty() && fre == 0){
+                    //fwq.socketDatos(puerto, fwq);
+                    fre = 1;
+                }
 
                 int tiempoCola = 0;
                 String tiempo = "";
@@ -256,7 +276,8 @@ public class FWQ_WaitingTimeServer {
                         }
 
                         if(num == 1){
-                            map.replace(id, tiempo);
+                            map.remove(id);
+                            map.put(id, tiempo);
                         }else if(num == 2){
                             map.put(id, tiempo);
                         }
@@ -272,13 +293,13 @@ public class FWQ_WaitingTimeServer {
                 System.out.println(map);
                  */
 
-                fwq.socketDatos(puerto, fwq);
-            }
+            //}
 
         }finally {
             consumer.close();
         }
 
+        return "";
 
     }
 

@@ -139,12 +139,14 @@ public class FWQ_Sensor {
 
         //NO HACER RANDOM, valor aleartorio entre 2 numeros
         int numero;
-        //(int)(Math.random()*100+1);
+        //int numero = (int)(Math.random()*100+50);
 
         //hacer que se ingrese por teclado el numero de personas
         Scanner scan = new Scanner(System.in);
         System.out.print("Introduce el numero de visitantes: ");
         numero = scan.nextInt();
+
+
 
         System.out.println(numero);
 
