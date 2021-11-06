@@ -101,7 +101,7 @@ public class FWQ_Visitor {
          */
 
         HashMap<String, String> primerMapa = new HashMap<>();
-        primerMapa.put("5", "5,5");
+        primerMapa.put("61", "5,5");
         primerMapa.put("59", "7,10");
         primerMapa.put("30", "8,12");
         primerMapa.put("45", "3,14");
@@ -112,7 +112,7 @@ public class FWQ_Visitor {
 
         //id:posision
 
-        primerJugadores.put("j1", "5,6");
+        primerJugadores.put("j1", "1,1");
         primerJugadores.put("j2", "7,11");
         primerJugadores.put("j3", "12,15");
 
@@ -121,7 +121,7 @@ public class FWQ_Visitor {
 
         //id:nombre=desstino
         HashMap<String, String> primerJugadores2= new HashMap<>();
-        primerJugadores2.put("j1:Sergio", "15,5");
+        primerJugadores2.put("j1:Sergio", "1,1");
         primerJugadores2.put("j2:Paco", "7,16");
         primerJugadores2.put("j3:Vic", "12,19");
         String mapa4 = primerJugadores2.toString().substring(1, primerJugadores2.toString().length()-1);
@@ -171,25 +171,19 @@ public class FWQ_Visitor {
 
         String entradaParque = "";
 
-        posicion = "1:1";
+        posicion = "1,1";
         xp = "1";
         xd = "1";
 
         datosUsu = usuario + ":" + contra;
         //en datosUsu ya tengo usuario:contra
 
-
-        //le paso a productorCredenciales el usuario y contraseña y
-        //luego tengo que llamar a consumir para recibir el OK!
-        //entradaParque = id,mapaAtracciones o ko,0
-        //todo
-        //entradaParque = productorCredenciales(usuario, contra, posicion);
-        entradaParque = "j1" + ":" + mapa2;
-
+        System.out.println("estoy en recibir datos, antes de productorcredenciales");
+        ///usuario y contraseña
+        entradaParque = productorCredenciales(usuario, contra, posicion);;
 
         //entradaParque va a recibir id:mapa entero Atracciones o ko:0
         //hacemos split para comprobar si ha podido entrar en el parque o no
-
         String informacion[] = entradaParque.split(":");
 
         //informacion[0] es id/ko
@@ -240,20 +234,25 @@ public class FWQ_Visitor {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
         consumer.subscribe(Collections.singleton("acceso"));
 
-        ConsumerRecords<String, String> records = consumer.poll(100);
+        try {
 
-        for (ConsumerRecord<String, String> record : records) {
-            //el productor me tiene que devolver
-            //informacion = record.value().toString().split(":");
-            mapa = record.value().toString();
+            System.out.println("estoy en consumerrecord esperando");
+            ConsumerRecords<String, String> records = consumer.poll(100);
+
+            for (ConsumerRecord<String, String> record : records) {
+                //el productor me tiene que devolver
+                //informacion = record.value().toString().split(":");
+                mapa = record.value().toString();
+            }
+
+            //mapa = id:mapaAtracciones
+
+        }finally {
+            consumer.close();
         }
-
-        //mapa = id:mapaAtracciones
         return mapa;
 
     }
-
-
     //productor que envia a traves de topiccredenciales
     //para que engine compruebe los datos del usuario
     //usuario:contra
@@ -265,13 +264,19 @@ public class FWQ_Visitor {
 
         Properties proper = new Properties();
 
-        String credenciales = usuario + ":" + contra + ":" + posicion;
+        datosUsu = usuario;
+
+        String credenciales = "";
+        //usuario,contraseña:posicion (1,1)
+        credenciales = usuario + ":" + contra + ":" + posicion;
 
         proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,gestorColas);
         proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         proper.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
         KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
+
+        System.out.println("estoy en productor credenciales y le paso: " + credenciales);
 
         productor.send(new ProducerRecord<String, String>("topiccredenciales", "keyA", credenciales));
 
@@ -283,9 +288,12 @@ public class FWQ_Visitor {
         acceso = consumir();
 
         //acceso = id:mapaAtracciones
-        return acceso;
-    }
 
+        System.out.println("acceso: " + acceso);
+
+        return acceso;
+
+    }
 
     //FUNCIONA 3/11/21
     //una vez entro al parque me empiezo a mover
@@ -310,6 +318,7 @@ public class FWQ_Visitor {
             mirar = elMapa[elegir].split("=");
             //mirar[0] = 60
             //mirar[1] = 5,5
+            System.out.println("tiempo: " + mirar[0].toString());
             tiempo = Integer.parseInt(mirar[0]);
             if(tiempo <= 60){
                 //elegimos esa atracción
@@ -326,7 +335,7 @@ public class FWQ_Visitor {
     }
 
     //FUNCIONA 3/11/21
-    public static String comprobarCasilla(String i, String j, String mapa){
+    public static String comprobarCasilla(String j, String i, String mapa){
 
         //System.out.print("Estoy en el metodo comprobarCasilla ");
 
@@ -368,8 +377,6 @@ public class FWQ_Visitor {
 
         String casilla = "", mapaEntero = "";
 
-        //LOGICAAAAAAA
-
         //en mapa tengo
         // 45=5:5, 24=7:10
 
@@ -381,32 +388,47 @@ public class FWQ_Visitor {
         //y le voy pasando a engin mi posicion y mi destino todo el rato
 
         boolean logOut = false;
+        int control = 0;
 
         //prueba
         //añadir boton que sea logout
         while(logOut == false){
 
+            if(control == 1){
+                //enviamos a engine a traves del  primer productor id para inndicarle que volvemos a conectarnos a el
+                //cuando reciba el id y compruebe q ya estabamos desde antes en el parque
+                //solo activará el consumidor y productor de vis
+                productorCredenciales(datosUsu, "nada", "1,1");
+                //lo importante es pasarle datosusu ya que es el usuario
+                //y es lo q necesita engine para saber si esta en el parque o no
+            }
+
             System.out.println("destino: " + xd + " " + yd);
             System.out.println("posicion: " + xp + " " + yp);
 
+            /*
             int numero;
             Scanner scan = new Scanner(System.in);
             System.out.print("Introduce el numero de visitantes: ");
             numero = scan.nextInt();
+             */
 
             //llamo a productor que le paso mi id y mi posicion
-            //en cada iteración voy avanzando
-            //productorPosicion(); //envia id:posicion:destino
+            //en cada iteración voy avanzando/productorPosicion(); //envia id:posicion:destino
+            productorPosicion();
 
 
             //recibo mapa y compruebo que mi destino no haya superado 60 mins
             //y muestro mapa
-            String elMapa = "";//consumidorMapa(); //recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino
+            //String elMapa = "";//
+            String elMapa = consumidorMapa(); //recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino
 
-            mapa3 = primerJugadores.toString();
+            System.out.println("el mapa: " + elMapa);
 
-            elMapa = mapa2 + ":" + mapa3;
-            System.out.println("Elmapa " + elMapa);
+            //mapa3 = primerJugadores.toString();
+
+            //elMapa = mapa2 + ":" + mapa3;
+            //System.out.println("Elmapa " + elMapa);
 
             movimiento();
 
@@ -422,7 +444,9 @@ public class FWQ_Visitor {
                 elegirDestino(mapa);
             }
 
-            primerJugadores.replace("j1", xp + "," + yp);
+            control = 1;
+
+            //primerJugadores.replace("j1", xp + "," + yp);
 
         }
 
@@ -467,6 +491,7 @@ public class FWQ_Visitor {
     }
 
     //FUNCIONA 3/11/21
+    //CAMBIAR POR SWITCH???
     public static void movimiento(){
 
         System.out.println("me muevo");
@@ -499,11 +524,25 @@ public class FWQ_Visitor {
         }else if(xD == xP && yD < yP){
             yP--;
             yp = String.valueOf(yP);
+        }else if(xD < xP && yD > yP){
+            xP--;
+            yP++;
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
+        }else if(xD > xP && yD < yP){
+            xP++;
+            yP--;
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
         }else{
             System.out.println("no hago nada");
         }
 
-        System.out.println("Posicion: X=" + xp + " Y=" + yp);
+
+
+        //me flata menor y mayor
+
+        System.out.println("Posicion siguiente: X=" + xp + " Y=" + yp);
     }
 
     //hay que comprobarlo en cada movimiento
@@ -514,8 +553,7 @@ public class FWQ_Visitor {
         //en elMapa tengo lo siguiente: mapa:mapaJugadores
         String[] partir = elMapa.split(":");
 
-        //igual tengo que quitar { y }
-        //substring(1, informacion[1].length()-1);
+        //igual tengo que quitar { y } AL MAPA
         String limpiar = partir[0].substring(1, partir[0].length()-1);
         String[] comprobar = limpiar.split(", ");
         String[] numeros, numero;
@@ -527,6 +565,8 @@ public class FWQ_Visitor {
             //numeros[0]
             //numeros[1] = 5,5
             numero = numeros[1].split(",");
+            //SI EL DESTINO ES IGUAL A LA POSICION DE UNO DE LAS POSICIONES DEL MAPA
+            //SE COMPRUEBA SI ESA ATRACCIÓN HA CAMBIADO DE TIEMPO A MAS DE 60
             if(xd.equals(numero[0]) && yd.equals(numero[1])){
                 mins = Integer.parseInt(numeros[0]);
                 encontrado = true;
@@ -550,13 +590,16 @@ public class FWQ_Visitor {
         KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
 
         String informacionPosicion = "";
+        String posi = xp + "," + yp;
 
-        informacionPosicion = id + ":" + posicion + ":" + destino;
+        informacionPosicion = id + ":" + posi + ":" + destino;
 
-        productor.send(new ProducerRecord<String, String>("topicPosicion", "keyA", informacionPosicion));
+        productor.send(new ProducerRecord<String, String>("topicmapa", "keyA", informacionPosicion));
 
         productor.flush();
         productor.close();
+
+        System.out.println("funcionaaaaa");
 
     }
 
@@ -564,20 +607,13 @@ public class FWQ_Visitor {
     //a través del topic devolverMapa
     public static String consumidorMapa() {
 
+        System.out.println("me meto en consumidorMapa");
+
         Properties proper = new Properties();
 
         String datos = "";
-
         String id = "", nuevoTiempo = "";
         String[] informacion;
-
-        /*
-        datos += hostKafka;
-        datos += ":";
-        datos += puertoKafka;
-
-        System.out.println(datos);
-         */
 
         proper.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, gestorColas);
         proper.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -586,30 +622,31 @@ public class FWQ_Visitor {
         proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
-        consumer.subscribe(Collections.singleton("devolverMapa"));
+        consumer.subscribe(Collections.singleton("devolvermapa"));
 
 
         String elMapa = "";
-        try{
-
-            while(true) {
+        while(elMapa.equals("")){
+            System.out.println("holaaaaaaa");
+            try{
 
                 //elMapa = "2";
                 ConsumerRecords<String, String> records = consumer.poll(100);
 
-                //recibo mapa:mapaJugadores
-
+                //recibo mapa:mapaJugadoresPos:mapaJugadoresDes
                 for (ConsumerRecord<String, String> record : records) {
-                    //record.value().toString();
+                    elMapa = record.value().toString();
+                    System.out.println(elMapa);
                 }
 
+            }finally{
+                if(!elMapa.equals("")) {
+                    consumer.close();
+                    return elMapa;
+                }
             }
-
-
-        }finally{
-            consumer.close();
-            return elMapa;
         }
+        return elMapa;
     }
 
     public static void mostrarMapa(String mapaEntero){

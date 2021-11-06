@@ -89,15 +89,20 @@ public class FWQ_WaitingTimeServer {
 
     public static void main(String[] args) {
 
+
+
         String puerto = "";
         String Cadena = "";
         String hostKafka = "";
         String puertoKafka = "";
 
+
+
         int verificacion = 0;
 
         //try{
             FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
+
 
             if(args.length < 3){
                 System.out.println("Debe indicar el puerto de escucha del servidor.");
@@ -109,7 +114,10 @@ public class FWQ_WaitingTimeServer {
                 hostKafka = args[1];
                 puertoKafka = args[2];
 
-                consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
+                //socketDatos(hostKafka, puertoKafka, fwq,Integer.parseInt(puerto));
+                //System.out.println("seguimos a lo nuestro");
+
+                //consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
 
                 while(true){
                     consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
