@@ -180,6 +180,7 @@ public class FWQ_WaitingTimeServer {
                         Cadena = leeSocket(skCliente, Cadena);
 
                         //verificacion = fwq.tiemposEspera(Cadena);
+                        System.out.println("escribo en el socket: " + map.toString());
                         escribeSocket(skCliente, map.toString());
                         i=-1;
                         consumidor(hostKafka, puertoKafka, fwq,puerto);

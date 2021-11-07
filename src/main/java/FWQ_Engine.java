@@ -78,7 +78,7 @@ public class FWQ_Engine {
         KafkaProducer<String,String> producer = new KafkaProducer<>(properties);
 
         producer.send(new ProducerRecord<String, String>("devolvermapa","keya", mapa2.toString() + ":" + playersPos.toString() + ":" + playersDes.toString()));
-        System.out.println("envio el mapa bien en producerVis " + mapa2.toString() + playersPos.toString() + playersDes.toString());
+        System.out.println("Envio el mapa entero de posiciones ocupadas: " + mapa2.toString() + playersPos.toString() + playersDes.toString());
 
         pVis = 1;
     }
@@ -97,24 +97,25 @@ public class FWQ_Engine {
 
         String[] visit = new String[0];
         while(visit.length == 0) {
-            System.out.println("espero en consumer vis");
+            //System.out.println("espero en consumer vis");
             try {
                 ConsumerRecords<String, String> records = consumer.poll(100);
                 for (ConsumerRecord<String, String> datos : records) {
                     visit = datos.value().toString().split(":");
                 }
-                if(visit.length != 0) {
 
+                if(visit.length != 0) {
                     if (playersDes.containsKey(visit[0])) {
                         playersDes.replace(visit[0], visit[2]);
                     }else{
                         playersDes.put(visit[0], visit[2]);
                     }
+
                     if (playersPos.containsKey(visit[0])) {
                         playersPos.replace(visit[0], visit[1]);
                     }
-                    System.out.println("Jugadores posicion: " + playersPos.toString());
-                    System.out.println("Jugadores destino: " + playersDes.toString());
+                    //System.out.println("Jugadores posicion: " + playersPos.toString());
+                    //System.out.println("Jugadores destino: " + playersDes.toString());
                     cVis = 1;
                 }
             }finally {
@@ -136,10 +137,13 @@ public class FWQ_Engine {
 
         KafkaProducer<String,String> producer = new KafkaProducer<>(properties);
 
+        int num = numVisit;
+
+
         if(comprobar) {
             if(parkFull) {
                 //le tengo que enviar el mapa2 ya que es el que tiene tiempo:ubicacion
-                producer.send(new ProducerRecord<String, String>("acceso","keya",usuario + ":" + mapa2.toString()));
+                producer.send(new ProducerRecord<String, String>("acceso","keya","J" + String.valueOf(num) + ":" + mapa2.toString()));
             } else {
                 producer.send(new ProducerRecord<String, String>("acceso","keya", "Parque lleno."));
             }
@@ -176,17 +180,27 @@ public class FWQ_Engine {
                 ConsumerRecords<String, String> records = consumer.poll(100);
 
                 for (ConsumerRecord<String, String> result : records) {
-                    System.out.println("Estoy en consumerEng y recibo: " + result.value().toString());
+                    System.out.println("Recibo del visitante: " + result.value().toString());
                     credencials = result.value().toString().split(":");
                 }
 
                 //credencials[0] = usuario
+                boolean siEsta = false;
 
-                for(int i = 0;i < players.size();i++){
+                //repasar pq no funciona bienn
 
+                /*
+                for(String datos : players.keySet()){
+                    System.out.println(datos);
+                    System.out.println(credencials[0]);
+                    if(credencials[0].equals(datos)){
+                        siEsta = true;
+                        System.out.println("si estaaaaa");
+                    }
                 }
+                 */
 
-                if(credencials.length != 0) {
+                if(credencials.length != 0 ) {
                     comprobacion = comprobar(credencials);
 
                     if (numVisit < maxVisit) {
@@ -194,16 +208,17 @@ public class FWQ_Engine {
                     } else {
                         lleno = false;
                     }
-                    System.out.println(lleno + " " + comprobacion + " " + credencials[0] + " " + localhost);
-                    producerEng(lleno, comprobacion, credencials[0], localhost);
+                    //System.out.println(lleno + " " + comprobacion + " " + credencials[0] + " " + localhost);
 
-                    System.out.println("numvisit: " + numVisit + " maxvisit: " + maxVisit);
+
+                    //System.out.println("numvisit: " + numVisit + " maxvisit: " + maxVisit);
                     if (comprobacion && numVisit < maxVisit) {
-                        System.out.println("me meto a añadir usuarios");
+                        //System.out.println("me meto a añadir usuarios");
                         numVisit++;
                         playersPos.put("J" + numVisit, credencials[2]);
                         players.put("J" + numVisit, credencials[0]);
                     }
+                    producerEng(lleno, comprobacion, credencials[0], localhost);
                     System.out.println("Jugadores existente: " + playersPos.toString());
                     cEng = 1;
                 }
@@ -254,6 +269,7 @@ public class FWQ_Engine {
             holsPos = document.get("ubicacion").toString();
             newMap.put(hols,holsPos);
         }
+
         for(String clave : map.keySet()) {
             for(String claveDos : newMap.keySet()) {
                 if(claveDos.equals(clave)) {
@@ -261,18 +277,21 @@ public class FWQ_Engine {
                 }
             }
         }
+
+
         return newMap;
     }
 
     //todo metodonuevo
     //funciona
     public static String actualizo(String mapa){
+        //System.out.println("en actualizo recibo: " + mapa);
         //recibo shambala=35, furius=40...
         HashMap<String,String> newMap = new HashMap<>();
 
         String mapaVisitante = "";
         String[] elMapa = mapa.split(", ");
-        String[] parto;
+        String[] parto, partoMapa2;
         String hols = "";
         String holsPos = "";
 
@@ -287,27 +306,41 @@ public class FWQ_Engine {
         }
 
         //shambala=5,5
-        System.out.println(newMap.toString());
+        //System.out.println(newMap.toString());
         //shambala=25
-        System.out.println(mapa);
+        //System.out.println(mapa);
+
+        mapa2 = new HashMap<>();
+
 
         for(int i = 0;i < elMapa.length; i++){
             parto = elMapa[i].split("=");
             //parto[0]=shambala
             //parto[1]=25
+            //partoMapa2 = mapa2.toString().split(", ");
             for(String claveDos : newMap.keySet()) {
-                System.out.println(claveDos);
-                System.out.println(parto[0]);
+                //System.out.println(claveDos);
+                //System.out.println(parto[0]);
                 if(claveDos.equals(parto[0])) {
-                    mapa2.put(parto[1],newMap.get(claveDos));
+                    //System.out.println("añadooo: " + parto[1] + " " + newMap.get(claveDos).toString());
+                    //ALGUNA CONDICION...
+                    //habra que cambiarlo
+                    //mapa2.put(newMap.get(claveDos),parto[1]);
+                    //if(newMap.get(claveDos).equals()){
+
+                    //}else {
+                        mapa2.put(parto[1], newMap.get(claveDos));
+                    //}
+
                 }
             }
         }
 
-        System.out.println(mapa2.toString());
+        //System.out.println("mapa finaaaaaal: " + mapa2.toString());
 
+        //System.out.println("mapa en actualizo: " + mapaVisitante.toString());
 
-        return mapaVisitante;
+        return mapa2.toString();
     }
 
     //borrar
@@ -356,6 +389,8 @@ public class FWQ_Engine {
     //funciona
     public static String transmisionn(String p_host, String p_puerto){
 
+        mapa = "";
+
         try{
             Socket skCliente = new Socket(p_host, Integer.parseInt(p_puerto));
 
@@ -369,7 +404,7 @@ public class FWQ_Engine {
 
             mapa = datos;
 
-            System.out.println(datos);
+            System.out.println("Recibo el mapa de atracciones: " + datos);
 
         }catch(Exception io){
             io.getMessage();
@@ -408,6 +443,7 @@ public class FWQ_Engine {
             pEng = 0;
             cVis = 0;
             pVis = 0;
+
 
             mapa = transmisionn(IPBro, puertoBro);
             //en mapa tengo shambala=25...

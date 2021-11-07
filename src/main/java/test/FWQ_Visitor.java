@@ -45,6 +45,7 @@ public class FWQ_Visitor {
     //datos para la conexión de los puertos e ips
     private static String hostRegistry, puertoRegistry, hostKafka, puertoKafka, gestorColas;
     private static String datosUsu = "";
+    private static String usua = "";
     private static Inicio login;
     private static Registrar miRegistrar;
 
@@ -100,67 +101,6 @@ public class FWQ_Visitor {
 
          */
 
-        HashMap<String, String> primerMapa = new HashMap<>();
-        primerMapa.put("61", "5,5");
-        primerMapa.put("59", "7,10");
-        primerMapa.put("30", "8,12");
-        primerMapa.put("45", "3,14");
-
-        //mapa2 = primerMapa.toString().substring(1, primerMapa.toString().length()-1);
-        mapa2 = primerMapa.toString();
-
-
-        //id:posision
-
-        primerJugadores.put("j1", "1,1");
-        primerJugadores.put("j2", "7,11");
-        primerJugadores.put("j3", "12,15");
-
-        //mapa3 = primerJugadores.toString().substring(1, primerJugadores.toString().length()-1);
-        mapa3 = primerJugadores.toString();
-
-        //id:nombre=desstino
-        HashMap<String, String> primerJugadores2= new HashMap<>();
-        primerJugadores2.put("j1:Sergio", "1,1");
-        primerJugadores2.put("j2:Paco", "7,16");
-        primerJugadores2.put("j3:Vic", "12,19");
-        String mapa4 = primerJugadores2.toString().substring(1, primerJugadores2.toString().length()-1);
-
-        todo = mapa2 + ", " + mapa3;
-
-
-        System.out.println("Mapa atracciones: " + mapa2.toString());
-
-
-        //pruebas
-        /*
-        while(xp.equals(xd) == false && yp.equals(yd) == false || xp.equals(xd) == true && yp.equals(yd) == false || xp.equals(xd) == false && yp.equals(yd) == true){
-            movimiento();
-        }
-        System.out.println("yeee");
-
-         */
-
-        /*
-        System.out.println(comprobarCasilla("5", "5", mapa2));
-
-        //REPASARRRRRRRR
-        //hacer un mapaJugadoresPos id:pos y mapaJugadoresDes j1:nombre=destino??
-        System.out.println("****** Fun with queues PortAventura ******");
-        System.out.println("    ID      Nombre      Pos     Destino");
-        String[] pos = mapa3.split(", ");
-        String[] des = mapa4.split(", ");
-        String[] parto, parto2, parto3;
-        for(int i = 0; i < pos.length ;i++){
-            //parto[0] = id parto[1] = posicion
-            parto = pos[i].split("=");
-            //parto2[0] = id:nombre parto2[1] = destino
-            parto2 = des[i].split("=");
-            parto3 = parto2[0].split(":");
-
-            System.out.println("    " + parto[0] + " #    " + parto3[1] + " #   " + parto[1] + "  #" + parto2[1]);
-        }
-         */
 
     }
 
@@ -176,9 +116,10 @@ public class FWQ_Visitor {
         xd = "1";
 
         datosUsu = usuario + ":" + contra;
+        usua = usuario;
         //en datosUsu ya tengo usuario:contra
 
-        System.out.println("estoy en recibir datos, antes de productorcredenciales");
+        //System.out.println("estoy en recibir datos, antes de productorcredenciales");
         ///usuario y contraseña
         entradaParque = productorCredenciales(usuario, contra, posicion);;
 
@@ -196,6 +137,7 @@ public class FWQ_Visitor {
             //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
             //aqui igualo id a informacion[0], para saber que id tiene cada jugador
             //j1, j2, j3...
+            id = "";
             id = informacion[0];
 
             //le paso informacion[1], que es el mapa para que sepa donde esta y cual es su destino
@@ -236,7 +178,7 @@ public class FWQ_Visitor {
 
         try {
 
-            System.out.println("estoy en consumerrecord esperando");
+            //System.out.println("estoy en consumerrecord esperando");
             ConsumerRecords<String, String> records = consumer.poll(100);
 
             for (ConsumerRecord<String, String> record : records) {
@@ -268,7 +210,13 @@ public class FWQ_Visitor {
 
         String credenciales = "";
         //usuario,contraseña:posicion (1,1)
-        credenciales = usuario + ":" + contra + ":" + posicion;
+        if(id.equals("")) {
+            credenciales = usuario + ":" + contra + ":" + posicion;
+        }else{
+            credenciales = id + ":" + contra + ":" + posicion;
+        }
+
+
 
         proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,gestorColas);
         proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -276,20 +224,20 @@ public class FWQ_Visitor {
 
         KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
 
-        System.out.println("estoy en productor credenciales y le paso: " + credenciales);
+        System.out.println("Le paso credenciales: " + credenciales);
 
         productor.send(new ProducerRecord<String, String>("topiccredenciales", "keyA", credenciales));
 
         productor.flush();
         productor.close();
 
-        System.out.println("yeeeeeee");
+        //System.out.println("yeeeeeee");
 
         acceso = consumir();
 
         //acceso = id:mapaAtracciones
 
-        System.out.println("acceso: " + acceso);
+        //System.out.println("acceso: " + acceso);
 
         return acceso;
 
@@ -299,7 +247,7 @@ public class FWQ_Visitor {
     //una vez entro al parque me empiezo a mover
     public static void elegirDestino(String mapa){
 
-        System.out.print("Estoy en el metodo elegirDestino ");
+        //System.out.print("Estoy en el metodo elegirDestino ");
 
         Boolean encuentro = false;
         int elegir = 0, longitud = 0, tiempo = 0;
@@ -318,7 +266,7 @@ public class FWQ_Visitor {
             mirar = elMapa[elegir].split("=");
             //mirar[0] = 60
             //mirar[1] = 5,5
-            System.out.println("tiempo: " + mirar[0].toString());
+            //System.out.println("tiempo: " + mirar[0].toString());
             tiempo = Integer.parseInt(mirar[0]);
             if(tiempo <= 60){
                 //elegimos esa atracción
@@ -350,8 +298,8 @@ public class FWQ_Visitor {
             //ejemplo 60=5,5
             //datos[0]=60
             //datos[1]=5,5
-                //localizar[0]=5
-                //localizar[1]=5
+            //localizar[0]=5
+            //localizar[1]=5
             datos = informacion[i2].split("=");
             localizar = datos[1].split(",");
             if(i.equals(localizar[0]) && j.equals(localizar[1])){
@@ -373,7 +321,7 @@ public class FWQ_Visitor {
 
     public static void moverse(String mapa){
 
-        System.out.println("Estoy en el metodo moverse ");
+        //System.out.println("Estoy en el metodo moverse ");
 
         String casilla = "", mapaEntero = "";
 
@@ -398,7 +346,7 @@ public class FWQ_Visitor {
                 //enviamos a engine a traves del  primer productor id para inndicarle que volvemos a conectarnos a el
                 //cuando reciba el id y compruebe q ya estabamos desde antes en el parque
                 //solo activará el consumidor y productor de vis
-                productorCredenciales(datosUsu, "nada", "1,1");
+                productorCredenciales(id, "nada", "1,1");
                 //lo importante es pasarle datosusu ya que es el usuario
                 //y es lo q necesita engine para saber si esta en el parque o no
             }
@@ -423,7 +371,7 @@ public class FWQ_Visitor {
             //String elMapa = "";//
             String elMapa = consumidorMapa(); //recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino
 
-            System.out.println("el mapa: " + elMapa);
+            System.out.println("Mapa entero de posiciones ocupadas " + elMapa);
 
             //mapa3 = primerJugadores.toString();
 
@@ -451,42 +399,6 @@ public class FWQ_Visitor {
         }
 
 
-        /*
-        //FUNCIONA 3/11/21 FALTARIA VER JUGADORES EN CASILLAS DE ATRACCIONES
-        //TODO PARA MOSTRAR EL MAPA
-        System.out.println("****** Fun with queues PortAventura ******");
-        System.out.println("    ID      Nombre      Pos     Destino");
-
-        //hacer un for y recorrer tantas veces como visitantes hayan
-        //hay que mostrar los datos de todos los jugadores
-        System.out.print("  ");
-        for(int i2 = 0;i2 < 20; i2++){
-            if(i2+1 > 10){
-                System.out.print("  ");
-                System.out.print(i2+1 + "");
-            }else{
-                System.out.print("   ");
-                System.out.print(i2+1 + "");
-            }
-        }
-        System.out.println();
-        for(int i = 1;i <= 20; i++){
-            if(i < 10){
-                System.out.print(i + "  ");
-            }else{
-                System.out.print(i + " ");
-            }
-            for(int j = 1;j <= 20; j++){
-                //ver como pasar el mapa de atracciones y jugadores para cuando un jugador este en una atracción
-                casilla = comprobarCasilla(String.valueOf(i), String.valueOf(j), mapaEntero);
-                System.out.print(casilla);
-                //System.out.print("  * ");
-            }
-            System.out.println();
-        }
-
-         */
-
 
     }
 
@@ -494,7 +406,7 @@ public class FWQ_Visitor {
     //CAMBIAR POR SWITCH???
     public static void movimiento(){
 
-        System.out.println("me muevo");
+        //System.out.println("me muevo");
 
         int xP, yP, xD, yD;
         xP = Integer.parseInt(xp);
@@ -542,7 +454,7 @@ public class FWQ_Visitor {
 
         //me flata menor y mayor
 
-        System.out.println("Posicion siguiente: X=" + xp + " Y=" + yp);
+        //System.out.println("Posicion siguiente: X=" + xp + " Y=" + yp);
     }
 
     //hay que comprobarlo en cada movimiento
@@ -593,13 +505,14 @@ public class FWQ_Visitor {
         String posi = xp + "," + yp;
 
         informacionPosicion = id + ":" + posi + ":" + destino;
+        //System.out.println("yo le paso por topicmapa esto: " + informacionPosicion);
 
         productor.send(new ProducerRecord<String, String>("topicmapa", "keyA", informacionPosicion));
 
         productor.flush();
         productor.close();
 
-        System.out.println("funcionaaaaa");
+        //System.out.println("funcionaaaaa");
 
     }
 
@@ -607,7 +520,7 @@ public class FWQ_Visitor {
     //a través del topic devolverMapa
     public static String consumidorMapa() {
 
-        System.out.println("me meto en consumidorMapa");
+        //System.out.println("me meto en consumidorMapa");
 
         Properties proper = new Properties();
 
@@ -627,16 +540,15 @@ public class FWQ_Visitor {
 
         String elMapa = "";
         while(elMapa.equals("")){
-            System.out.println("holaaaaaaa");
+            //System.out.println("holaaaaaaa");
             try{
-
                 //elMapa = "2";
                 ConsumerRecords<String, String> records = consumer.poll(100);
 
                 //recibo mapa:mapaJugadoresPos:mapaJugadoresDes
                 for (ConsumerRecord<String, String> record : records) {
                     elMapa = record.value().toString();
-                    System.out.println(elMapa);
+                    //System.out.println(elMapa);
                 }
 
             }finally{
@@ -657,6 +569,27 @@ public class FWQ_Visitor {
 
         String[] limpiar = mapaEntero.split(":");
         String mapaLimpio = limpiar[0].toString().substring(1, limpiar[0].toString().length()-1) + ", " + limpiar[1].toString().substring(1, limpiar[1].toString().length()-1);
+
+        String posiciones = limpiar[1].toString().substring(1, limpiar[1].toString().length()-1) + ", ";
+        String destinos = limpiar[2].toString().substring(1, limpiar[2].toString().length()-1) + ", ";
+
+        String[] posicion = posiciones.split(", ");
+        String[] destino = destinos.split(", ");
+
+        System.out.println("mapa limpio en mostrarmapa: " + mapaLimpio);
+
+        System.out.println("** Fun with queues PortAventura **");
+        System.out.println("    ID      Nombre      Pos     Destino");
+
+        for(int k = 0;k < posicion.length; k++){
+            //posicion[0] = J1=8,13
+            //destino[0] = J1=8,14
+            String[] parto1 = posicion[0].split("=");
+            String[] parto2 = destino[0].split("=");
+
+            System.out.println("    " + parto1[0] + " #   " + usua + " #       " + parto1[1] + "#     " + parto2[1]);
+        }
+
 
         System.out.print("  ");
         for(int i2 = 0;i2 < 20; i2++){
