@@ -147,7 +147,7 @@ public class FWQ_Sensor {
         System.out.print("Introduce el numero de visitantes: ");
         numero = scan.nextInt();
 
-
+        //prueba
 
         System.out.println(numero);
 
