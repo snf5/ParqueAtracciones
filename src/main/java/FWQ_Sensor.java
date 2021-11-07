@@ -155,7 +155,7 @@ public class FWQ_Sensor {
         tiempo += ":";
         tiempo += numero;
 
-        productor.send(new ProducerRecord<String, String>("prueba", "keyA", tiempo));
+        productor.send(new ProducerRecord<String, String>("sensores", "keyA", tiempo));
 
         productor.flush();
         productor.close();

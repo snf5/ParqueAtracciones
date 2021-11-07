@@ -223,7 +223,7 @@ public class FWQ_WaitingTimeServer {
         proper.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
-        consumer.subscribe(Collections.singleton("prueba"));
+        consumer.subscribe(Collections.singleton("sensores"));
 
         try{
             //while(true) {
