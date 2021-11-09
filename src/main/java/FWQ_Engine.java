@@ -25,7 +25,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 public class FWQ_Engine {
-    // id + nombre
+
+    // id + usuario
     private static HashMap<String, String> players = new HashMap<>();
     // id + pos
     private static HashMap<String, String> playersPos = new HashMap<>();
@@ -83,6 +84,7 @@ public class FWQ_Engine {
         pVis = 1;
     }
 
+    // usuario:id:posicion:destino???
     // id:posicion:destino
     public static void consumerVis(String visitante, String localhost) {
         Properties properties = new Properties();
@@ -189,18 +191,19 @@ public class FWQ_Engine {
 
                 //repasar pq no funciona bienn
 
-                /*
-                for(String datos : players.keySet()){
-                    System.out.println(datos);
-                    System.out.println(credencials[0]);
-                    if(credencials[0].equals(datos)){
-                        siEsta = true;
-                        System.out.println("si estaaaaa");
+                if(credencials.length != 0) {
+                    for (String datos : players.keySet()) {
+                        // System.out.println(datos + "-----------" + credencials[0]);
+
+                        if (datos.equals(credencials[0].toString())) {
+                            siEsta = true;
+                            System.out.println("si estaaaaa");
+                            cEng = 1;
+                        }
                     }
                 }
-                 */
 
-                if(credencials.length != 0 ) {
+                if(credencials.length != 0 && siEsta == false) {
                     comprobacion = comprobar(credencials);
 
                     if (numVisit < maxVisit) {
@@ -436,7 +439,9 @@ public class FWQ_Engine {
         String gestorDeColas = "";
         gestorDeColas = args[0] + ":" + args[1];
 
+        /*
 
+         */
 
         while(true) {
             cEng = 0;
@@ -445,37 +450,31 @@ public class FWQ_Engine {
             pVis = 0;
 
 
-            mapa = transmisionn(IPBro, puertoBro);
-            //en mapa tengo shambala=25...
-            //hay que actualizar el mapa de 25=5,5
-            actualizo(mapa.substring(1, mapa.length()-1));
-            while(cEng == 0) {
-                consumerEng("", gestorDeColas);
-            }
-            //aqui no se mete!!!!!!???????
-            while(cVis == 0){
-                consumerVis("", gestorDeColas);
+            try {
+                mapa = transmisionn(IPBro, puertoBro);
+                Thread.sleep(100);
+                //en mapa tengo shambala=25...
+                //hay que actualizar el mapa de 25=5,5
+                actualizo(mapa.substring(1, mapa.length() - 1));
+                Thread.sleep(100);
+                while (cEng == 0) {
+                    consumerEng("", gestorDeColas);
+                }
+                Thread.sleep(100);
+                //aqui no se mete!!!!!!???????
+                while (cVis == 0) {
+                    consumerVis("", gestorDeColas);
 
-            }
-            while(pVis == 0){
-                producerVis(gestorDeColas);
+                }
+                Thread.sleep(100);
+                while (pVis == 0) {
+                    producerVis(gestorDeColas);
+                }
+                Thread.sleep(100);
+            }catch (InterruptedException e){
+                e.printStackTrace();
             }
         }
-
-        /*HashMap<String, String> ey = new HashMap<>();
-        ey.put("joder","quéAsco");
-        ey.put("joder2","quéAsco2");
-        ey.put("joder3","quéAsco3");
-        ey.put("joder4","quéAsco4");
-        ey.put("joder5","quéAsco5");
-        for(String hola : ey.keySet()) {
-            //System.out.println(hola);
-            //System.out.println(ey.get(hola));
-        }
-
-        //mapa = actualizarMapa(fwq.transmision(IPBro,puertoBro));
-        */
-
     }
 }
 

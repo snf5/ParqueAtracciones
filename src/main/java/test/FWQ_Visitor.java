@@ -22,6 +22,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 
+
+
 public class FWQ_Visitor {
 
     //
@@ -123,6 +125,7 @@ public class FWQ_Visitor {
         ///usuario y contraseña
         entradaParque = productorCredenciales(usuario, contra, posicion);;
 
+
         //entradaParque va a recibir id:mapa entero Atracciones o ko:0
         //hacemos split para comprobar si ha podido entrar en el parque o no
         String informacion[] = entradaParque.split(":");
@@ -133,6 +136,11 @@ public class FWQ_Visitor {
             //no puede entrar al parque hasta o que se registre o meta bien los datos
 
         }else{
+            //aqui muestro el botón de logout para que cuando se pinche
+            //mande J1:out:bhif
+            //y se elimine el jugador del parque
+
+
             //se puede entrar al parque y llamamos a prodcutor y consumidor
             //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
             //aqui igualo id a informacion[0], para saber que id tiene cada jugador
@@ -192,6 +200,13 @@ public class FWQ_Visitor {
         }finally {
             consumer.close();
         }
+
+        try{
+            Thread.sleep(100);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
+
         return mapa;
 
     }
@@ -224,7 +239,7 @@ public class FWQ_Visitor {
 
         KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
 
-        System.out.println("Le paso credenciales: " + credenciales);
+        //System.out.println("Le paso credenciales: " + credenciales);
 
         productor.send(new ProducerRecord<String, String>("topiccredenciales", "keyA", credenciales));
 
@@ -232,8 +247,16 @@ public class FWQ_Visitor {
         productor.close();
 
         //System.out.println("yeeeeeee");
+        try{
+            Thread.sleep(100);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
 
-        acceso = consumir();
+
+        if(id == "") {
+            acceso = consumir();
+        }
 
         //acceso = id:mapaAtracciones
 
@@ -247,7 +270,7 @@ public class FWQ_Visitor {
     //una vez entro al parque me empiezo a mover
     public static void elegirDestino(String mapa){
 
-        //System.out.print("Estoy en el metodo elegirDestino ");
+        System.out.print("Estoy en el metodo elegirDestino " + mapa);
 
         Boolean encuentro = false;
         int elegir = 0, longitud = 0, tiempo = 0;
@@ -257,7 +280,7 @@ public class FWQ_Visitor {
         //mapa = 50=5,5, 40=3,3, 15=7,14;
 
         String[] elMapa = mapa.split(", ");
-        System.out.println(elMapa[0].toString());
+        //System.out.println(elMapa[0].toString());
         longitud = elMapa.length;
 
         while(encuentro == false){
@@ -279,7 +302,7 @@ public class FWQ_Visitor {
             }
         }
 
-        System.out.println(" Mi destino es: X " + xd + " Y " + yd);
+        //System.out.println(" Mi destino es: X " + xd + " Y " + yd);
     }
 
     //FUNCIONA 3/11/21
@@ -321,6 +344,8 @@ public class FWQ_Visitor {
 
     public static void moverse(String mapa){
 
+        String elMapa = "";
+
         //System.out.println("Estoy en el metodo moverse ");
 
         String casilla = "", mapaEntero = "";
@@ -331,6 +356,14 @@ public class FWQ_Visitor {
         //una vez tengo esto tengo que elegir destino
         //en mapa solo tengo las atracciones
         elegirDestino(mapa);
+
+        if(elMapa.equals("")){
+            elegirDestino(mapa);
+        }else{
+            String[] parto = elMapa.split(":");
+            String limpio = parto[0].substring(1, parto[0].length()-1);
+            elegirDestino(limpio);
+        }
 
         //una vez elegido el destino, tengo que calcular el recorrido
         //y le voy pasando a engin mi posicion y mi destino todo el rato
@@ -351,8 +384,8 @@ public class FWQ_Visitor {
                 //y es lo q necesita engine para saber si esta en el parque o no
             }
 
-            System.out.println("destino: " + xd + " " + yd);
-            System.out.println("posicion: " + xp + " " + yp);
+            //System.out.println("destino: " + xd + " " + yd);
+            //System.out.println("posicion: " + xp + " " + yp);
 
             /*
             int numero;
@@ -365,13 +398,24 @@ public class FWQ_Visitor {
             //en cada iteración voy avanzando/productorPosicion(); //envia id:posicion:destino
             productorPosicion();
 
+            try{
+                Thread.sleep(100);
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
 
             //recibo mapa y compruebo que mi destino no haya superado 60 mins
             //y muestro mapa
             //String elMapa = "";//
-            String elMapa = consumidorMapa(); //recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino
+            elMapa = consumidorMapa(); //recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino
 
-            System.out.println("Mapa entero de posiciones ocupadas " + elMapa);
+            try{
+                Thread.sleep(100);
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+
+            //System.out.println("Mapa entero de posiciones ocupadas " + elMapa);
 
             //mapa3 = primerJugadores.toString();
 
@@ -388,8 +432,15 @@ public class FWQ_Visitor {
 
             if(xp.equals(xd) && yp.equals(yd)){
                 System.out.println("he llegado a mi destino");
+                System.out.print(elMapa);
 
-                elegirDestino(mapa);
+                if(elMapa.equals("")){
+                    elegirDestino(mapa);
+                }else{
+                    String[] parto = elMapa.split(":");
+                    String limpio = parto[0].substring(1, parto[0].length()-1);
+                    elegirDestino(limpio);
+                }
             }
 
             control = 1;
@@ -460,7 +511,7 @@ public class FWQ_Visitor {
     //hay que comprobarlo en cada movimiento
     public static void cambiarPosicion(String elMapa){
 
-        System.out.println("Estoy en el metodo cambiarPosicion ");
+        //System.out.println("Estoy en el metodo cambiarPosicion ");
 
         //en elMapa tengo lo siguiente: mapa:mapaJugadores
         String[] partir = elMapa.split(":");
@@ -563,7 +614,7 @@ public class FWQ_Visitor {
 
     public static void mostrarMapa(String mapaEntero){
 
-        System.out.println("estoy en mostrarMapa " + mapaEntero.toString());
+        //System.out.println("estoy en mostrarMapa " + mapaEntero.toString());
         String casilla = "";
 
 
@@ -576,9 +627,9 @@ public class FWQ_Visitor {
         String[] posicion = posiciones.split(", ");
         String[] destino = destinos.split(", ");
 
-        System.out.println("mapa limpio en mostrarmapa: " + mapaLimpio);
+        //System.out.println("mapa limpio en mostrarmapa: " + mapaLimpio);
 
-        System.out.println("** Fun with queues PortAventura **");
+        System.out.println("    ** Fun with queues PortAventura **");
         System.out.println("    ID      Nombre      Pos     Destino");
 
         for(int k = 0;k < posicion.length; k++){
@@ -616,7 +667,27 @@ public class FWQ_Visitor {
             }
             System.out.println();
         }
+
+        try{
+            Thread.sleep(1000);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
+
+        try {
+
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+
+        } catch (Exception e) {
+
+            /*No hacer nada*/
+
+        }
+
+
     }
+
+
 
     //todo listo
     //esta es la parte que se comunica con registry
