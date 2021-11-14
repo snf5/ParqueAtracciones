@@ -78,13 +78,13 @@ public class FWQ_Engine {
 
         KafkaProducer<String,String> producer = new KafkaProducer<>(properties);
 
-        producer.send(new ProducerRecord<String, String>("devolvermapa","keya", mapa2.toString() + ":" + playersPos.toString() + ":" + playersDes.toString()));
+        producer.send(new ProducerRecord<String, String>("devolvermapa","keya", mapa2.toString() + ":" + playersPos.toString() + ":" + playersDes.toString() + ":" + players.toString()));
         System.out.println("Envio el mapa entero de posiciones ocupadas: " + mapa2.toString() + playersPos.toString() + playersDes.toString());
 
         pVis = 1;
     }
 
-    // usuario:id:posicion:destino???
+    // usuario:id:posicion:destino???????
     // id:posicion:destino
     public static void consumerVis(String visitante, String localhost) {
         Properties properties = new Properties();
@@ -107,18 +107,37 @@ public class FWQ_Engine {
                 }
 
                 if(visit.length != 0) {
-                    if (playersDes.containsKey(visit[0])) {
-                        playersDes.replace(visit[0], visit[2]);
-                    }else{
-                        playersDes.put(visit[0], visit[2]);
-                    }
 
-                    if (playersPos.containsKey(visit[0])) {
-                        playersPos.replace(visit[0], visit[1]);
+                    if(visit[1].equals("out")){
+                        //borramos al usuario de los maps
+                        if(playersDes.containsKey(visit[0])){
+                            playersDes.remove(visit[0]);
+                        }
+
+                        if(playersPos.containsKey(visit[0])){
+                            playersPos.remove(visit[0]);
+                        }
+
+                        if(players.containsKey(visit[0])){
+                            players.remove(visit[0]);
+                        }
+                        numVisit--;
+                    }else {
+
+                        if (playersDes.containsKey(visit[0])) {
+                            playersDes.replace(visit[0], visit[2]);
+                        } else {
+                            playersDes.put(visit[0], visit[2]);
+                        }
+
+                        if (playersPos.containsKey(visit[0])) {
+                            playersPos.replace(visit[0], visit[1]);
+                        }
+
+                        //System.out.println("Jugadores posicion: " + playersPos.toString());
+                        //System.out.println("Jugadores destino: " + playersDes.toString());
+                        cVis = 1;
                     }
-                    //System.out.println("Jugadores posicion: " + playersPos.toString());
-                    //System.out.println("Jugadores destino: " + playersDes.toString());
-                    cVis = 1;
                 }
             }finally {
                 if(visit.length != 0){
@@ -147,10 +166,12 @@ public class FWQ_Engine {
                 //le tengo que enviar el mapa2 ya que es el que tiene tiempo:ubicacion
                 producer.send(new ProducerRecord<String, String>("acceso","keya","J" + String.valueOf(num) + ":" + mapa2.toString()));
             } else {
-                producer.send(new ProducerRecord<String, String>("acceso","keya", "Parque lleno."));
+                String noCabe = usuario +":ko:0";
+                producer.send(new ProducerRecord<String, String>("acceso","keya", noCabe));
             }
         } else {
-            producer.send(new ProducerRecord<String, String>("acceso","keya","ko:0"));
+            String noCabe = usuario +":ko:0";
+            producer.send(new ProducerRecord<String, String>("acceso","keya",noCabe));
         }
 
         producer.flush();
@@ -214,16 +235,22 @@ public class FWQ_Engine {
                     //System.out.println(lleno + " " + comprobacion + " " + credencials[0] + " " + localhost);
 
 
+
                     //System.out.println("numvisit: " + numVisit + " maxvisit: " + maxVisit);
                     if (comprobacion && numVisit < maxVisit) {
                         //System.out.println("me meto a añadir usuarios");
                         numVisit++;
                         playersPos.put("J" + numVisit, credencials[2]);
                         players.put("J" + numVisit, credencials[0]);
+
+                        producerEng(lleno, comprobacion, credencials[0], localhost);
+                        System.out.println("Jugadores existente: " + playersPos.toString());
+                        cEng = 1;
+
+                    }else{
+                        producerEng(lleno, comprobacion, credencials[0], localhost);
                     }
-                    producerEng(lleno, comprobacion, credencials[0], localhost);
-                    System.out.println("Jugadores existente: " + playersPos.toString());
-                    cEng = 1;
+
                 }
             } finally {
                 if(credencials.length != 0) {
@@ -392,7 +419,6 @@ public class FWQ_Engine {
     //funciona
     public static String transmisionn(String p_host, String p_puerto){
 
-        mapa = "";
 
         try{
             Socket skCliente = new Socket(p_host, Integer.parseInt(p_puerto));
@@ -451,11 +477,14 @@ public class FWQ_Engine {
 
 
             try {
+
                 mapa = transmisionn(IPBro, puertoBro);
                 Thread.sleep(100);
                 //en mapa tengo shambala=25...
                 //hay que actualizar el mapa de 25=5,5
-                actualizo(mapa.substring(1, mapa.length() - 1));
+                if(!mapa.equals("")) {
+                    actualizo(mapa.substring(1, mapa.length() - 1));
+                }
                 Thread.sleep(100);
                 while (cEng == 0) {
                     consumerEng("", gestorDeColas);

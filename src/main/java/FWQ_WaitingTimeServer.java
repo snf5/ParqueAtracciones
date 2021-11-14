@@ -3,8 +3,11 @@
 
 //esta a la escucha de que engine le solicite información (es un servidor)
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
+import com.mongodb.ServerAddress;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoClientOptions;
+
+import com.mongodb.*;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
@@ -108,7 +111,7 @@ public class FWQ_WaitingTimeServer {
                 System.out.println("Debe indicar el puerto de escucha del servidor.");
                 System.out.println("$./Servidor puerto_servidor");
                 System.exit(1);
-            }else{
+            }else {
 
                 puerto = args[0];
                 hostKafka = args[1];
@@ -119,45 +122,15 @@ public class FWQ_WaitingTimeServer {
 
                 //consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
 
-                while(true){
+                while (true) {
                     consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
-                    if(!map.isEmpty()) {
-                        socketDatos(hostKafka, puertoKafka, fwq,Integer.parseInt(puerto));
+                    if (!map.isEmpty()) {
+                        socketDatos(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
                     }
                 }
 
                 //todo hacer funcion de socket para ir pasandole la informacióny añadir en este metodo un while(true)
-
-                /*
-                ServerSocket skServidor = new ServerSocket(Integer.parseInt(puerto));
-                System.out.println("Escucho el puerto " + puerto);
-
-                for(;;) {
-                    Socket skCliente = skServidor.accept();
-                    System.out.println("Sirviendo cliente...");
-                    while(verificacion != -1) {
-                        Cadena = fwq.leeSocket(skCliente, Cadena);
-
-                        verificacion = fwq.tiemposEspera(Cadena);
-                        fwq.escribeSocket(skCliente, map.toString());
-                    }
-                    skCliente.close();
-                    //mirarlo bien
-                    int j = 0;
-                    if(j == -1){
-
-                        System.exit(0);
-                    }
-
-                }
-
-                 */
             }
-/*
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
- */
 
     }
 
@@ -247,6 +220,8 @@ public class FWQ_WaitingTimeServer {
                     //System.out.println(record.value().toString());
 
                     //CON ESTO SAMOS EL TIEMPO DE ESPERA DE LA ATRACCIÓN
+                    String inf = record.value().toString();
+                    System.out.println("leo: " + inf);
                     informacion = record.value().toString().split(":");
 
                     int personas = 0;
@@ -323,8 +298,12 @@ public class FWQ_WaitingTimeServer {
 
         System.out.println("Personas: " + personas);
 
-        MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
+        //MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
         MongoClient client = MongoClients.create("mongodb://localhost:27017");
+
+        //com.mongodb.MongoClient client = new com.mongodb.MongoClient("localhost", 27017);
+        //Mongoclient clientee = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+
 
         MongoDatabase db = client.getDatabase("parque");
 

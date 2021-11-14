@@ -83,6 +83,8 @@ public class FWQ_Sensor {
         puertoKafka = args[1];
         id = args[2];
 
+        System.out.print("Sensor de la atraccion " + id);
+
         int numero = (int)(Math.random()*3+1);
 
         //cada x tiempo (entre 1 y 3 segundos) se enviará el numero de visitantes
