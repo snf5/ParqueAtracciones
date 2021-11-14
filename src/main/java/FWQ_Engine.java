@@ -150,6 +150,8 @@ public class FWQ_Engine {
 
     //funciona
     //if the credentials are correct, producer will send the map
+    //envia j1:mapaAtracciones
+    //podriamos enviar j1:mapaAtracciones:usuario?? y asi controlamos bien a la hora de leer cuando se cae engine?
     public static void producerEng(boolean parkFull, boolean comprobar, String usuario, String localhost) {
         Properties properties = new Properties();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, localhost);
@@ -164,7 +166,7 @@ public class FWQ_Engine {
         if(comprobar) {
             if(parkFull) {
                 //le tengo que enviar el mapa2 ya que es el que tiene tiempo:ubicacion
-                producer.send(new ProducerRecord<String, String>("acceso","keya","J" + String.valueOf(num) + ":" + mapa2.toString()));
+                producer.send(new ProducerRecord<String, String>("acceso","keya","J" + String.valueOf(num) + ":" + mapa2.toString() + ":" + usuario));
             } else {
                 String noCabe = usuario +":ko:0";
                 producer.send(new ProducerRecord<String, String>("acceso","keya", noCabe));

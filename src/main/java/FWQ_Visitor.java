@@ -60,15 +60,6 @@ public class FWQ_Visitor {
         xp = "1";
         yp = "1";
 
-        //aqui recibo IP y puerto de FWQ_Registry
-        //e IP y puerto de kafka
-
-        //args[0] IP de registry
-        //args[1] puerto de registry
-
-        //args[2] IP de kafka
-        //args[3] puerto de kafka
-
         hostRegistry = args[0];
         puertoRegistry = args[1];
 
@@ -76,11 +67,6 @@ public class FWQ_Visitor {
         puertoKafka = args[3];
 
         gestorColas = hostKafka + ":" + puertoKafka;
-
-        /*
-        login = new Inicio();
-        login.setVisible(true);
-         */
 
         int numero = 0;
         String usuario = "", contra = "", nombre = "", alias = "", contra2 = "";
@@ -90,8 +76,6 @@ public class FWQ_Visitor {
         System.out.println("2. Registro de usuario");
         Scanner scan = new Scanner(System.in);
         numero = scan.nextInt();
-
-
 
         if (numero == 1) {
             inicio();
@@ -106,16 +90,13 @@ public class FWQ_Visitor {
         //comprobar que el registro se hizo correctamente
         //para ello el registry me debe devolver por socket
         //una confirmación
-
         /*
         topic:
         - credenciales
         - acceso
         - posicion
         - devolver mapa
-         */
 
-        /*
         para realizar el inicio de sesión tengo que invocar al productor del topic entrarParque
         para mandar información a engine
 
@@ -126,8 +107,6 @@ public class FWQ_Visitor {
         Productor para enviar datos de credenciales a engine
         Consumidor para recibir el mapa (en caso de que no este registrado, engine enviará mediante su productor un ko)
         Productor para ir madnando a engine sus movimientos y que los actualice en el mapa
-
-
          */
 
 
@@ -168,83 +147,114 @@ public class FWQ_Visitor {
     //ya desde aqui ir llamando al resto de modulos para que se lleve a cabo todo
     public static void recibirDatos(String usuario, String contra) {
 
-        String entradaParque = "";
+        if(servidorCaido == false) {
 
-        posicion = "1,1";
-        xp = "1";
-        xd = "1";
+            String entradaParque = "";
 
-        id = "";
+            posicion = "1,1";
+            xp = "1";
+            xd = "1";
 
-        datosUsu = usuario + ":" + contra;
-        usua = usuario;
-        contras = contra;
-        //en datosUsu ya tengo usuario:contra
-
-        //System.out.println("estoy en recibir datos, antes de productorcredenciales");
-        ///usuario y contraseña
-        entradaParque = productorCredenciales(usuario, contra, posicion);
-        ;
-
-
-        //entradaParque va a recibir id:mapa entero Atracciones o ko:0
-        //hacemos split para comprobar si ha podido entrar en el parque o no
-        String informacion[] = entradaParque.split(":");
-
-        //informacion[0] es id/ko
-        //informacion[1] es mapaAtracciones/0
-
-        if (informacion[0].equals(usua) && informacion[1].equals("ko")) {
-            //no puede entrar al parque hasta o que se registre o meta bien los datos
-            System.out.print("Parque lleno...");
-            System.exit(0);
-
-        } else {
-            //aqui muestro el botón de logout para que cuando se pinche
-            //mande J1:out:bhif
-            //y se elimine el jugador del parque
-
-
-            //se puede entrar al parque y llamamos a prodcutor y consumidor
-            //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
-            //aqui igualo id a informacion[0], para saber que id tiene cada jugador
-            //j1, j2, j3...
             id = "";
-            id = informacion[0];
 
-            //le paso informacion[1], que es el mapa para que sepa donde esta y cual es su destino
-            //OJOOOOO recibo un map de las posiciones ocupadas de las atracciones
+            datosUsu = usuario + ":" + contra;
+            usua = usuario;
+            contras = contra;
+            //en datosUsu ya tengo usuario:contra
 
-            //quitar = 45=5,5, 24=7,10
-
-            String quitar = informacion[1].toString().substring(1, informacion[1].toString().length() - 1);
-            //le paso la cadena tal que asi: 45=5,5, 24=7,10
-            //y al hacer por ahi lo de [] me va sacando shamabal=12 ...
-            //a moverse se le pasa el mapa limpio para elegir destino
-
-            int contar = 0;
+            //System.out.println("estoy en recibir datos, antes de productorcredenciales");
+            ///usuario y contraseña
+            entradaParque = productorCredenciales(usuario, contra, posicion);
 
 
 
-            if(contar == 0) {
-                FWQ_Visitor fwq = new FWQ_Visitor();
+            //entradaParque va a recibir id:mapa entero Atracciones o ko:0
+            //hacemos split para comprobar si ha podido entrar en el parque o no
+            String informacion[] = entradaParque.split(":");
 
-                log = new logOut(fwq);
-                log.setVisible(true);
+            //informacion[0] es id/ko
+            //informacion[1] es mapaAtracciones/0
 
-                if(log.getSalir() == true){
-                    //salimos del parque
+            if (informacion[0].equals(usua) && informacion[1].equals("ko")) {
+                //no puede entrar al parque hasta o que se registre o meta bien los datos
+                System.out.print("Parque lleno...");
+                System.exit(0);
+
+            } else {
+                //aqui muestro el botón de logout para que cuando se pinche
+                //mande J1:out:bhif
+                //y se elimine el jugador del parque
+
+
+                //se puede entrar al parque y llamamos a prodcutor y consumidor
+                //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
+                //aqui igualo id a informacion[0], para saber que id tiene cada jugador
+                //j1, j2, j3...
+                id = "";
+                id = informacion[0];
+
+                //le paso informacion[1], que es el mapa para que sepa donde esta y cual es su destino
+                //OJOOOOO recibo un map de las posiciones ocupadas de las atracciones
+
+                //quitar = 45=5,5, 24=7,10
+
+                String quitar = informacion[1].toString().substring(1, informacion[1].toString().length() - 1);
+                //le paso la cadena tal que asi: 45=5,5, 24=7,10
+                //y al hacer por ahi lo de [] me va sacando shamabal=12 ...
+                //a moverse se le pasa el mapa limpio para elegir destino
+
+                int contar = 0;
+
+
+                if (contar == 0) {
+                    FWQ_Visitor fwq = new FWQ_Visitor();
+
+                    log = new logOut(fwq);
+                    log.setVisible(true);
+
+                    if (log.getSalir() == true) {
+                        //salimos del parque
+                    }
+
                 }
 
+                contar = 1;
+
+
+                moverse(quitar);
+            }
+        }else{
+
+            //si que se ha iniciado sesion, pero el servidor esta caido
+            posicion = xp + "," + yp;
+
+            String volverEntrar = "";
+            String miUsuraio = "";
+            String[] partir;
+
+            while(volverEntrar.equals("") && miUsuraio.equals("")) {
+                //j1:mapaAtracciones:usuario
+                volverEntrar = productorCredenciales(usuario, contra, posicion);
+
+                partir = volverEntrar.split(":");
+
+                if(volverEntrar.equals("") == false && usuario.equals(partir[2])){
+                    miUsuraio = partir[2];
+                }
             }
 
-            contar = 1;
+            System.out.println("aqui llegooooo");
 
+            //el id ya lo tengo asignado, asiq no cambio
 
-            moverse(quitar);
+            String[] mapa = volverEntrar.split(":");
+
+            if(mapa[0].equals(usua) == false && mapa[1].equals("ko") == false){
+                String quito = mapa[1].toString().substring(1, mapa[1].toString().length() - 1);
+
+                moverse(quito);
+            }
         }
-
-
     }
 
 
@@ -446,6 +456,8 @@ public class FWQ_Visitor {
 
         elegirDestino(mapa);
 
+
+        //si se ha caido el servidor tengo ya un destino y este paso no lo tengo que hacer en principio
         if (elMapa.equals("")) {
             elegirDestino(mapa);
         } else {
@@ -691,6 +703,7 @@ public class FWQ_Visitor {
         }
 
         if(elMapa.equals("")){
+            servidorCaido = true;
             recibirDatos(usua, contras);
         }
         return elMapa;
@@ -871,7 +884,6 @@ public class FWQ_Visitor {
         return datos;
     }
 }
-
 
 
 class logOut extends JFrame {
