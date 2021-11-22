@@ -24,6 +24,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.*;
+import java.util.spi.CalendarDataProvider;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Filters.eq;
@@ -91,21 +92,15 @@ public class FWQ_WaitingTimeServer {
     }
 
     public static void main(String[] args) {
-
-
-
         String puerto = "";
         String Cadena = "";
         String hostKafka = "";
         String puertoKafka = "";
 
-
-
         int verificacion = 0;
 
         //try{
             FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
-
 
             if(args.length < 3){
                 System.out.println("Debe indicar el puerto de escucha del servidor.");
@@ -123,10 +118,15 @@ public class FWQ_WaitingTimeServer {
                 //consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
 
                 while (true) {
+                    //añadido esto juevea
                     consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
+                    while(map.isEmpty()) {
+                        consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
+                    }
                     if (!map.isEmpty()) {
                         socketDatos(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
                     }
+                    consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
                 }
 
                 //todo hacer funcion de socket para ir pasandole la informacióny añadir en este metodo un while(true)
@@ -138,9 +138,7 @@ public class FWQ_WaitingTimeServer {
 
         String Cadena = "";
 
-
             try {
-
                 ServerSocket skServidor = new ServerSocket(puerto);
 
                 System.out.println("Escucho el puerto " + puerto);
@@ -148,24 +146,16 @@ public class FWQ_WaitingTimeServer {
                 for (;;) {
                     Socket skCliente = skServidor.accept();
                     System.out.println("Sirviendo cliente...");
-                    int i = 0;
-                    while(i != -1) {
-                        Cadena = leeSocket(skCliente, Cadena);
 
-                        //verificacion = fwq.tiemposEspera(Cadena);
-                        System.out.println("escribo en el socket: " + map.toString());
-                        escribeSocket(skCliente, map.toString());
-                        i=-1;
-                        consumidor(hostKafka, puertoKafka, fwq,puerto);
-                    }
-                    //mirarlo bien
+                    //modificado esto jueves
 
-                    skCliente.close();
-                    //System.exit(0);
+                    Thread t = new HiloServidor(skCliente, hostKafka, puertoKafka, fwq, puerto);
+                    t.start();
+
 
                 }
-
             } catch (IOException e) {
+                //System.out.println("nova nova nova....");
                 e.printStackTrace();
             }
 
@@ -198,13 +188,12 @@ public class FWQ_WaitingTimeServer {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
         consumer.subscribe(Collections.singleton("sensores"));
 
+        String datoss = "";
+
         try{
             //while(true) {
 
-                System.out.println("aqui estoy");
-
                 ConsumerRecords<String, String> records = consumer.poll(100);
-
                 //todo
                 int fre = 0;
 
@@ -212,16 +201,16 @@ public class FWQ_WaitingTimeServer {
                     //fwq.socketDatos(puerto, fwq);
                     fre = 1;
                 }
-
                 int tiempoCola = 0;
                 String tiempo = "";
 
                 for (ConsumerRecord<String, String> record : records) {
-                    //System.out.println(record.value().toString());
+                    tiempo = "";
+                    id = "";
 
                     //CON ESTO SAMOS EL TIEMPO DE ESPERA DE LA ATRACCIÓN
                     String inf = record.value().toString();
-                    System.out.println("leo: " + inf);
+                    System.out.println("Leo: " + inf);
                     informacion = record.value().toString().split(":");
 
                     int personas = 0;
@@ -244,47 +233,43 @@ public class FWQ_WaitingTimeServer {
 
                 //REPASAR EL MAP PARA PASARSELO A ENGINE
                 if(nuevoTiempo != "") {
-
-                    if (map.isEmpty()) {
-                        map.put(id, tiempo);
-                    } else {
-                        int num = 0;
-                        for (Map.Entry entry : map.entrySet()) {
-                            if (entry.getKey() == id) {
-                                //map.replace(id, tiempo);
-                                num = 1;
-                            } else {
-                                //map.put(id, tiempo);
-                                num =  2;
-                            }
-                        }
-
-                        if(num == 1){
-                            map.remove(id);
-                            map.put(id, tiempo);
-                        }else if(num == 2){
-                            map.put(id, tiempo);
-                        }
-                    }
-
+                    comprobar(id, tiempo);
                     System.out.println(map);
                     nuevoTiempo = "";
                 }
-
-                /*
-                System.out.println("holaaa");
-                map.put(id, nuevoTiempo);
-                System.out.println(map);
-                 */
-
-            //}
-
         }finally {
             consumer.close();
+            //System.out.println("se petaaaaaaaa");
         }
 
         return "";
 
+    }
+
+    public static void comprobar(String id, String tiempo){
+
+            if (map.isEmpty()) {
+                map.put(id, tiempo);
+            } else {
+                int num = 0;
+                for (Map.Entry entry : map.entrySet()) {
+                    if (entry.getKey() == id) {
+                        //map.replace(id, tiempo);
+                        num = 1;
+                    } else {
+                        //map.put(id, tiempo);
+                        num =  2;
+                    }
+                }
+                if(num == 1){
+                    map.remove(id);
+                    map.put(id, tiempo);
+                }else if(num == 2){
+                    map.put(id, tiempo);
+                }
+            }
+
+            System.out.println(map);
     }
 
 
@@ -295,8 +280,6 @@ public class FWQ_WaitingTimeServer {
         double  encola = 0, calculo = 0, tiempo = 0,  mins = 0;
         String prueba = id;
         String minutos = "", visi = "";
-
-        System.out.println("Personas: " + personas);
 
         //MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/Parque?retryWrites=true&w=majority");
         MongoClient client = MongoClients.create("mongodb://localhost:27017");
@@ -313,15 +296,12 @@ public class FWQ_WaitingTimeServer {
 
         //parte de engine
        // MongoCollection<Document> cola = db.getCollection("Atraccion");
-
         //FindIterable<Document> documm = cola.find();
-
         /*
         for(Document documennt : documm){
             System.out.println(documennt.get("ubicacion").toString());
         }
          */
-
 
         for (Document document : docum) {
             visi = document.get("visitantes").toString();
@@ -335,9 +315,75 @@ public class FWQ_WaitingTimeServer {
 
         tiempo = Math.ceil(calculo*mins);
 
+        int numero1 = (int)(Math.random()*10+1);
+        tiempo += numero1;
 
         return tiempo;
     }
 
+    public String pasarMapa(){
+        return map.toString();
+    }
 
+}
+
+class HiloServidor extends Thread{
+
+    private Socket skCliente;
+    private String host, puerto;
+    private int pPuerto;
+    private  FWQ_WaitingTimeServer fw;
+
+
+    public HiloServidor(Socket p_cliente, String hostKafka, String puertoKafka, FWQ_WaitingTimeServer fwq, int puerto){
+        this.skCliente = p_cliente;
+        this.host = hostKafka;
+        this.puerto = puertoKafka;
+        this.pPuerto = puerto;
+        this.fw = fwq;
+    }
+
+    public String leeSocket (Socket p_sk, String p_datos){
+        try{
+            InputStream aux = p_sk.getInputStream();
+            DataInputStream flujo = new DataInputStream(aux);
+            p_datos = new String();
+            p_datos = flujo.readUTF();
+        } catch(Exception io) {
+            io.getMessage();
+        }
+        return p_datos;
+
+    }
+
+    public void escribeSocket(Socket p_sk, String p_datos){
+
+        try {
+            OutputStream out = p_sk.getOutputStream();
+            DataOutputStream flujo = new DataOutputStream(out);
+            System.out.println("Escribo: " + p_datos);
+            flujo.writeUTF(p_datos);
+        } catch(Exception io) {
+            io.getMessage();
+        }
+        return;
+    }
+
+    public void run(){
+        String cadena = "";
+
+        FWQ_WaitingTimeServer wait = new FWQ_WaitingTimeServer();
+
+        try{
+            cadena = this.leeSocket(skCliente, cadena);
+            this.escribeSocket(skCliente, wait.pasarMapa());
+
+            wait.consumidor(host, puerto, fw, pPuerto);
+
+            skCliente.close();
+
+        }catch(Exception e){
+            System.out.println("error: " + e.toString());
+        }
+    }
 }

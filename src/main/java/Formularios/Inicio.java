@@ -83,6 +83,8 @@ public class Inicio extends JFrame {
         if(txtUsuario.getText() != "" && txtContra.getText() != "") {
             probando.recibirDatos(txtUsuario.getText(), txtContra.getText());
             todoBien = true;
+
+
         }
 
     }

@@ -23,8 +23,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import javax.swing.*;
 
-
-public class FWQ_Visitor {
+class FWQ_Visitor {
 
     //
     private static String usu = "";
@@ -52,10 +51,19 @@ public class FWQ_Visitor {
     private static Registrar miRegistrar;
 
     private static logOut log;
+    private static inicio ini;
 
     private static boolean servidorCaido = false;
 
     public static void main(String args[]) {
+
+        /* BORRAR
+        log = new logOut();
+        log.setVisible(true);
+         */
+
+        ini = new inicio();
+        ini.setVisible(true);
 
         xp = "1";
         yp = "1";
@@ -70,21 +78,6 @@ public class FWQ_Visitor {
 
         int numero = 0;
         String usuario = "", contra = "", nombre = "", alias = "", contra2 = "";
-
-        System.out.println("BIENVENIDO AL PARQUE PORTAVENTURA");
-        System.out.println("1. Iniciar sesion");
-        System.out.println("2. Registro de usuario");
-        Scanner scan = new Scanner(System.in);
-        numero = scan.nextInt();
-
-        if (numero == 1) {
-            inicio();
-        } else if(numero == 2) {
-            registro();
-
-        } else {
-
-        }
 
 
         //comprobar que el registro se hizo correctamente
@@ -112,80 +105,57 @@ public class FWQ_Visitor {
 
     }
 
-    public static void registro(){
-
-        String nombre = "", alias = "", contra2 = "";
-        Scanner scan = new Scanner(System.in);
-
-        System.out.print("Alias: ");
-        alias = scan.next();
-        System.out.print("Nombre: ");
-        nombre = scan.next();
-        System.out.print("Contrsenya: ");
-        contra2 = scan.next();
-
-        if(registrar(alias, nombre, contra2)){
-            inicio();
-            System.out.println();
-        }
-    }
-
-    public static void inicio(){
-
-        String usuario = "", contra = "";
-        Scanner scan = new Scanner(System.in);
-
-        System.out.print("Usuario: ");
-        usuario = scan.next();
-        System.out.print("Contrsenya: ");
-        contra = scan.next();
-        recibirDatos(usuario, contra);
-    }
-
 
     //recibo y guardo los datos del usuario para
     //ya desde aqui ir llamando al resto de modulos para que se lleve a cabo todo
     public static void recibirDatos(String usuario, String contra) {
 
         if(servidorCaido == false) {
-
             String entradaParque = "";
 
             posicion = "1,1";
             xp = "1";
             xd = "1";
-
             id = "";
 
             datosUsu = usuario + ":" + contra;
+            aliasUsu = usuario;
             usua = usuario;
             contras = contra;
             //en datosUsu ya tengo usuario:contra
+            String mitad = "";
 
             //System.out.println("estoy en recibir datos, antes de productorcredenciales");
             ///usuario y contraseña
             entradaParque = productorCredenciales(usuario, contra, posicion);
 
-
-
             //entradaParque va a recibir id:mapa entero Atracciones o ko:0
             //hacemos split para comprobar si ha podido entrar en el parque o no
-            String informacion[] = entradaParque.split(":");
+            String informacion[] = new String[0];
+
+            informacion = entradaParque.split(":");
+
+            if(informacion.length != 0) {
+                mitad = informacion[1].toString();
+            }
+
+            while(mitad.equals("")){
+                mitad = "";
+                entradaParque = productorCredenciales(usuario, contra, posicion);
+                informacion = entradaParque.split(":");
+                mitad = informacion[1].toString();
+            }
 
             //informacion[0] es id/ko
             //informacion[1] es mapaAtracciones/0
-
             if (informacion[0].equals(usua) && informacion[1].equals("ko")) {
                 //no puede entrar al parque hasta o que se registre o meta bien los datos
                 System.out.print("Parque lleno...");
                 System.exit(0);
-
             } else {
                 //aqui muestro el botón de logout para que cuando se pinche
                 //mande J1:out:bhif
                 //y se elimine el jugador del parque
-
-
                 //se puede entrar al parque y llamamos a prodcutor y consumidor
                 //podriamods llamar a un metodo que se encargue de llamar todo el rato a productor y consumidor
                 //aqui igualo id a informacion[0], para saber que id tiene cada jugador
@@ -198,7 +168,20 @@ public class FWQ_Visitor {
 
                 //quitar = 45=5,5, 24=7,10
 
-                String quitar = informacion[1].toString().substring(1, informacion[1].toString().length() - 1);
+                String medio = "";
+
+                medio = informacion[1].toString();
+
+
+
+                while(medio.equals("")){
+                    medio = "";
+                    entradaParque = productorCredenciales(usuario, contra, posicion);
+                    informacion = entradaParque.split(":");
+                    medio = informacion[1].toString();
+                }
+
+                String quitar = medio.substring(1, medio.length() - 1);
                 //le paso la cadena tal que asi: 45=5,5, 24=7,10
                 //y al hacer por ahi lo de [] me va sacando shamabal=12 ...
                 //a moverse se le pasa el mapa limpio para elegir destino
@@ -209,54 +192,48 @@ public class FWQ_Visitor {
                 if (contar == 0) {
                     FWQ_Visitor fwq = new FWQ_Visitor();
 
-                    log = new logOut(fwq);
-                    log.setVisible(true);
-
-                    if (log.getSalir() == true) {
+                    //ini.setOut();
+                    if (ini.getSalir() == true) {
                         //salimos del parque
                     }
-
                 }
-
                 contar = 1;
-
-
                 moverse(quitar);
             }
         }else{
-
             //si que se ha iniciado sesion, pero el servidor esta caido
             posicion = xp + "," + yp;
 
             String volverEntrar = "";
-            String miUsuraio = "";
-            String[] partir;
 
-            while(volverEntrar.equals("") && miUsuraio.equals("")) {
-                //j1:mapaAtracciones:usuario
+            while(volverEntrar.equals("")) {
+
                 volverEntrar = productorCredenciales(usuario, contra, posicion);
 
-                partir = volverEntrar.split(":");
-
-                if(volverEntrar.equals("") == false && usuario.equals(partir[2])){
-                    miUsuraio = partir[2];
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
-            System.out.println("aqui llegooooo");
-
+            System.out.println(volverEntrar);
             //el id ya lo tengo asignado, asiq no cambio
-
             String[] mapa = volverEntrar.split(":");
 
-            if(mapa[0].equals(usua) == false && mapa[1].equals("ko") == false){
-                String quito = mapa[1].toString().substring(1, mapa[1].toString().length() - 1);
+            if(mapa[2].equals(usua)) {
+                String quitar = mapa[1].toString().substring(1, mapa[1].toString().length() - 1);
+                moverse(quitar);
+            }
 
-                moverse(quito);
+            while(mapa[2].equals(usua) == false) {
+                if (mapa[2].equals(usua)) {
+                    String quitar = mapa[1].toString().substring(1, mapa[1].toString().length() - 1);
+                    moverse(quitar);
+                }
             }
         }
     }
-
 
     //los dos metodos de aqui abajo son para poder entrar al parque
     //consumidor que recibe por parte de engine la confirmación de acceso al parque
@@ -279,25 +256,28 @@ public class FWQ_Visitor {
 
         try {
 
-            //System.out.println("estoy en consumerrecord esperando");
-            ConsumerRecords<String, String> records = consumer.poll(100);
+            while(mapa.equals("")) {
 
-            for (ConsumerRecord<String, String> record : records) {
-                //el productor me tiene que devolver
-                //informacion = record.value().toString().split(":");
-                compruebo = record.value().toString();
-            }
+                //System.out.println("estoy en consumerrecord esperando");
+                ConsumerRecords<String, String> records = consumer.poll(100);
 
-            //compruebo = id:mapaAtracciones
-            //o usuario:ko:0 si no puedo entrar al parque
+                for (ConsumerRecord<String, String> record : records) {
+                    //el productor me tiene que devolver
+                    //informacion = record.value().toString().split(":");
+                    compruebo = record.value().toString();
+                }
 
-            String[] parto = compruebo.split(":");
+                //compruebo = id:mapaAtracciones
+                //o usuario:ko:0 si no puedo entrar al parque
 
-            if (parto[0].equals(usua) && parto[1].equals("ko")) {
-                //mapa = ko:0 ???
-                mapa = compruebo;
-            } else {
-                mapa = compruebo;
+                String[] parto = compruebo.split(":");
+
+                if (parto[0].equals(usua) && parto[1].equals("ko")) {
+                    //mapa = ko:0 ???
+                    mapa = compruebo;
+                } else {
+                    mapa = compruebo;
+                }
             }
 
         } finally {
@@ -310,7 +290,7 @@ public class FWQ_Visitor {
             e.printStackTrace();
         }
 
-        System.out.print("consumir(): " + mapa.toString());
+
 
         return mapa;
 
@@ -337,6 +317,10 @@ public class FWQ_Visitor {
             credenciales = id + ":" + contra + ":" + posicion;
         }
 
+        if(servidorCaido == true){
+            credenciales = "";
+            credenciales = usuario + ":" + contra + ":" + posicion + ":" + destino;
+        }
 
         proper.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, gestorColas);
         proper.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -345,7 +329,6 @@ public class FWQ_Visitor {
         KafkaProducer<String, String> productor = new KafkaProducer<>(proper);
 
         //System.out.println("Le paso credenciales: " + credenciales);
-
         productor.send(new ProducerRecord<String, String>("topiccredenciales", "keyA", credenciales));
 
         productor.flush();
@@ -361,21 +344,17 @@ public class FWQ_Visitor {
 
         if (id.equals("")) {
             acceso = consumir();
+        }else if(servidorCaido == true){
+            acceso = consumir();
         }
 
-        //acceso = id:mapaAtracciones
-
-        //System.out.println("acceso: " + acceso);
-
         return acceso;
-
     }
 
     //FUNCIONA 3/11/21
     //una vez entro al parque me empiezo a mover
     public static void elegirDestino(String mapa) {
 
-        System.out.print("Estoy en el metodo elegirDestino " + mapa);
 
         Boolean encuentro = false;
         int elegir = 0, longitud = 0, tiempo = 0;
@@ -454,23 +433,30 @@ public class FWQ_Visitor {
 
         String casilla = "", mapaEntero = "";
 
-        elegirDestino(mapa);
+        //modificado jueves
+        if(xd.equals("") == false) {
 
-
-        //si se ha caido el servidor tengo ya un destino y este paso no lo tengo que hacer en principio
-        if (elMapa.equals("")) {
             elegirDestino(mapa);
-        } else {
-            String[] parto = elMapa.split(":");
-            String limpio = parto[0].substring(1, parto[0].length() - 1);
-            elegirDestino(limpio);
-        }
 
+            if (elMapa.equals("")) {
+                elegirDestino(mapa);
+            } else {
+                String[] parto = elMapa.split(":");
+                String limpio = parto[0].substring(1, parto[0].length() - 1);
+                elegirDestino(limpio);
+            }
+        }
         //una vez elegido el destino, tengo que calcular el recorrido
         //y le voy pasando a engin mi posicion y mi destino todo el rato
 
         boolean logOut = false;
         int control = 0;
+        if(servidorCaido == true){
+            control = 1;
+            servidorCaido = false;
+        }else{
+            control = 0;
+        }
 
         while (logOut == false) {
 
@@ -492,7 +478,10 @@ public class FWQ_Visitor {
                 e.printStackTrace();
             }
 
-            todoMapa = consumidorMapa();//recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino:jugadores(id=usuario, para mostrar todos los visitantes junto con su nombre)
+
+                todoMapa = consumidorMapa();//recibo mapa:mapaJugadoresPosicion:mapaJugadoresDestino:jugadores(id=usuario, para mostrar todos los visitantes junto con su nombre)
+
+
             String[] dividir = todoMapa.split(":");
 
             elMapa = dividir[0] + ":" + dividir[1] + ":" + dividir[2];
@@ -505,14 +494,14 @@ public class FWQ_Visitor {
                 e.printStackTrace();
             }
 
-            movimiento();
+            movimientoo();
 
             cambiarPosicion(elMapa);
 
             mostrarMapa(elMapa, idNombre);
 
             if (xp.equals(xd) && yp.equals(yd)) {
-                System.out.println("he llegado a mi destino");
+                System.out.println("He llegado a mi destino");
                 System.out.print(elMapa);
 
                 if (elMapa.equals("")) {
@@ -523,13 +512,8 @@ public class FWQ_Visitor {
                     elegirDestino(limpio);
                 }
             }
-
             control = 1;
-
-
         }
-
-
     }
 
     //FUNCIONA 3/11/21
@@ -537,6 +521,28 @@ public class FWQ_Visitor {
     public static void movimiento() {
 
         //System.out.println("me muevo");
+
+        int xDis = 0, yDis = 0, xHorizontal = 0, yHorizontal = 0, xVertical = 0, yVertical = 0;
+
+        //si no hago esférico
+        xDis = Math.abs(Integer.parseInt(xp) - Integer.parseInt(xd));
+        yDis = Math.abs(Integer.parseInt(yp) - Integer.parseInt(yd));
+
+        //si hago movimiento esferico horizontal
+        xHorizontal = Math.abs((Integer.parseInt(xp)-1) + (20 -  Integer.parseInt(xd)));
+        yHorizontal = Math.abs(Integer.parseInt(yp) - Integer.parseInt(yd));
+
+        //si hago movimiento esferico vertical
+        xVertical = Math.abs(Integer.parseInt(xp) - Integer.parseInt(xd));
+        yVertical = Math.abs((Integer.parseInt(yp)-1) + (20 -  Integer.parseInt(yd)));
+
+        System.out.println("recorrido: " + String.valueOf(xDis) + " " + String.valueOf(yDis));
+        System.out.println("la vuelta horizontal: " + String.valueOf(xHorizontal) + " " + String.valueOf(yHorizontal));
+        System.out.println("la vuelta vertical: " + String.valueOf(xVertical) + " " + String.valueOf(yVertical));
+
+        Math.min(xDis+yDis, xHorizontal+yHorizontal);
+
+
 
         int xP, yP, xD, yD;
         xP = Integer.parseInt(xp);
@@ -579,8 +585,169 @@ public class FWQ_Visitor {
         } else {
             System.out.println("no hago nada");
         }
+        //System.out.println("Posicion siguiente: X=" + xp + " Y=" + yp);
+    }
 
+    public static void movimientoo() {
 
+        //System.out.println("me muevo");
+
+        int xP, yP, xD, yD;
+        xP = Integer.parseInt(xp);
+        yP = Integer.parseInt(yp);
+        xD = Integer.parseInt(xd);
+        yD = Integer.parseInt(yd);
+
+        boolean BiggerTwoD = ((xD-xP) + (yD-yP)) >= ((((xP-1)+(20-xD))) + ((yP-1)+(20-yD)));
+        boolean BiggerTwoP = ((xP-xD) + (yP-yD)) >= (((20-xP)+(xD-1)) + (((20-yP)+(yD-1))));
+        boolean BiggerxPyD = ((xP-xD) + (yD-yP)) >= ((((20-xP)+(xD-1))) + ((yP-1)+(20-yD)));
+        boolean BiggerxDyP = ((xD-xP) + (yP-yD)) >= ((((xP-1)+(20-xD))) + ((20-yP)+(yD-1)));
+
+        boolean xDBigger = ((xD-xP)>((xP-1)+(20-xD)));
+        boolean yDBigger = ((yD-yP)>((yP-1)+(20-yD)));
+        boolean xPBigger = (((20-xP)+(xD-1))<(xP-xD));
+        boolean yPBigger = (((20-yP)+(yD-1))<(yP-yD));
+
+        if((xD > xP) && (yD > yP)){
+            if(BiggerTwoD) {
+                if(xP == 1 && yP == 1) {
+                    xP = 20;
+                    yP = 20;
+                } else if(xP == 1) {
+                    xP = 20;
+                    yP = 21 - yP;
+                } else if(yP == 1) {
+                    xP = 21 - xP;
+                    yP = 20;
+                }
+                else {
+                    xP--;
+                    yP--;
+                }
+            } else {
+                xP++;
+                yP++;
+            }
+
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
+        }else if(xD > xP && yD == yP){
+            if(xDBigger) {
+                if(xP == 1) {
+                    xP = 20;
+                } else {
+                    xP--;
+                }
+            } else {
+                xP++;
+            }
+
+            xp = String.valueOf(xP);
+        }else if(xD == xP && yD > yP){
+            if(yDBigger) {
+                if(yP == 1) {
+                    yP = 20;
+                } else {
+                    yP --;
+                }
+            } else {
+                yP++;
+            }
+
+            yp = String.valueOf(yP);
+        }else if(xD < xP && yD < yP){
+            if(BiggerTwoP) {
+                if(xP == 20 && yP == 20) {
+                    xP = 1;
+                    yP = 1;
+                } else if(xP == 20) {
+                    xP = 1;
+                    yP = 21 - yP;
+                } else if(yP == 20) {
+                    xP = 21 - xP;
+                    yP = 1;
+                } else {
+                    xP++;
+                    yP++;
+                }
+            } else {
+                xP--;
+                yP--;
+            }
+
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
+        }else if(xD < xP && yD == yP){
+            if(xPBigger) {
+                if(xP == 20) {
+                    xP = 1;
+                } else {
+                    xP++;
+                }
+            } else {
+                xP--;
+            }
+            xp = String.valueOf(xP);
+        }else if(xD == xP && yD < yP){
+            if(yPBigger) {
+                if(yP == 20) {
+                    yP = 1;
+                } else {
+                    yP++;
+                }
+            } else {
+                yP--;
+            }
+
+            yp = String.valueOf(yP);
+        }else if(xD < xP && yD > yP){
+            if(BiggerxPyD) {
+                if(xP == 20 && yP == 1) {
+                    xP = 1;
+                    yP = 20;
+                } else if(xP == 20) {
+                    xP = 1;
+                    yP = 21 - yP;
+                } else if(yP == 1) {
+                    xP = 21 - xP;
+                    yP = 20;
+                } else {
+                    xP++;
+                    yP--;
+                }
+            } else {
+                xP--;
+                yP++;
+            }
+
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
+        }else if(xD > xP && yD < yP){
+            if(BiggerxDyP) {
+                if(xP == 1 && yP == 20) {
+                    xP = 20;
+                    yP = 1;
+                } else if(xP == 1) {
+                    xP = 20;
+                    yP = 21 - yP;
+                } else if(yP == 20) {
+                    xP = 21 - xP;
+                    yP = 1;
+                } else {
+                    xP--;
+                    yP++;
+                }
+            } else {
+                xP++;
+                yP--;
+            }
+
+            xp = String.valueOf(xP);
+            yp = String.valueOf(yP);
+        }else{
+            System.out.println("no hago nada");
+        }
+        System.out.println(xP + "::::" + yP);
         //me flata menor y mayor
 
         //System.out.println("Posicion siguiente: X=" + xp + " Y=" + yp);
@@ -633,7 +800,7 @@ public class FWQ_Visitor {
         String informacionPosicion = "";
         String posi = xp + "," + yp;
 
-        if(log.getSalir() == true){
+        if(ini.getSalir() == true){
             //le envio id:logout
             informacionPosicion = id + ":" + "out";
         }else{
@@ -648,7 +815,7 @@ public class FWQ_Visitor {
         productor.flush();
         productor.close();
 
-        if(log.getSalir() == true){
+        if(ini.getSalir() == true){
             System.exit(0);
         }
 
@@ -677,14 +844,16 @@ public class FWQ_Visitor {
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(proper);
         consumer.subscribe(Collections.singleton("devolvermapa"));
 
-
         String elMapa = "";
-        int miro = 0;
-        while (elMapa.equals("") && miro < 10) {
-            System.out.println("holaaaaaaa");
+        boolean tenerDestino = false;
+        int mirar = 0;
+        while (elMapa.equals("") && mirar < 10) {
+
+            //System.out.println("holaaaaaaa");
             try {
-                //elMapa = "2";
                 ConsumerRecords<String, String> records = consumer.poll(100);
+
+
 
                 //recibo mapa:mapaJugadoresPos:mapaJugadoresDes:jugadores(id=usuario)
                 for (ConsumerRecord<String, String> record : records) {
@@ -692,20 +861,32 @@ public class FWQ_Visitor {
                     //System.out.println(elMapa);
                 }
 
+                //String cons = consumir();
 
+                if(elMapa.equals("") && xp.equals("1") == false && destino.equals("") == false ){
+                    mirar++;
+                }
             } finally {
+
                 if (!elMapa.equals("")) {
                     consumer.close();
                     return elMapa;
                 }
             }
-            miro++;
         }
+        System.out.println(mirar);
+        if(mirar == 10){
+            System.out.println("Servidor caido.... Esperando reconexion");
 
-        if(elMapa.equals("")){
             servidorCaido = true;
-            recibirDatos(usua, contras);
+            recibirDatos(aliasUsu, contras);
+
+            //podriamos enviar un mapa inventado ko:00
+            //para que se de cuenta y vuelva a mandar credenciales
+
+            //elMapa = "ko:00";
         }
+        //todo
         return elMapa;
     }
 
@@ -736,7 +917,11 @@ public class FWQ_Visitor {
             //posicion[0] = J1=8,13
             //destino[0] = J1=8,14
             String[] parto1 = posicion[k].split("=");
-            String[] parto2 = destino[k].split("=");
+            String[] parto2 = new String[0];
+            if(posicion.length <= destino.length) {
+                parto2 = destino[k].split("=");
+            }
+
             String nombre = "";
 
             String idNombreLimpio = idNombre.substring(1, idNombre.length() - 1);
@@ -749,7 +934,11 @@ public class FWQ_Visitor {
                 }
             }
 
-            System.out.println("    " + parto1[0] + " #   " + nombre + " #       " + parto1[1] + "#     " + parto2[1]);
+            if(posicion.length <= destino.length) {
+                System.out.println("    " + parto1[0] + " #   " + nombre + " #       " + parto1[1] + "#     " + parto2[1]);
+            }else{
+                System.out.println("    " + parto1[0] + " #   " + nombre + " #       " + parto1[1] + "#     " + " ");
+            }
         }
 
 
@@ -779,22 +968,16 @@ public class FWQ_Visitor {
             System.out.println();
         }
 
-        System.out.println("sale??: " + log.getSalir());
-
         try {
+            //modificado jueves
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
         try {
-
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
 
         } catch (Exception e) {
-
-            /*No hacer nada*/
-
         }
 
 
@@ -889,35 +1072,341 @@ public class FWQ_Visitor {
 class logOut extends JFrame {
 
     private JButton log;
+    private JButton prueba;
 
     private boolean salir = false;
 
-    public logOut(FWQ_Visitor fwq) {
-        setTitle("Registro del parque");
+    public logOut() {
+        setTitle("Registro del parquee");
         setResizable(false);
         setSize(390, 220);
         setLayout(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         log = new JButton("Logout");
+        prueba = new JButton("fueraaa");
 
         add(log);
+        add(prueba);
 
         log.reshape(20, 75, 120, 30);
+        prueba.reshape(20, 75, 120, 30);
 
         log.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                salir(e, fwq);
+                salir(e);
+            }
+        });
+
+        prueba.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                salir(e);
             }
         });
     }
 
-    private boolean salir(ActionEvent e, FWQ_Visitor fwq ) {
+    private boolean salir(ActionEvent e ) {
         salir = true;
 
         return salir;
     }
 
     public boolean getSalir(){return salir;}
+}
+
+class inicio extends JFrame{
+
+    private JButton iniciar;
+    private JButton registrar;
+    private JButton modificar;
+
+    private JButton entrar;
+    private JButton registrarse;
+    private JButton modificarse;
+
+    private JLabel alias;
+    private JLabel nombre;
+    private JLabel contra;
+
+    private JTextField txtAlias;
+    private JTextField txtNombre;
+    private JPasswordField txtContra;
+
+    private JButton out;
+    private boolean salir = false;
+
+    public inicio(){
+        setTitle("Bienvenido al parque PortAventura");
+        setResizable(false);
+        setSize(390, 220);
+        setLayout(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        iniciar = new JButton("Entrar");
+        registrar = new JButton("Registrar");
+        modificar = new JButton("Modificar");
+
+        add(iniciar);
+        add(registrar);
+        add(modificar);
+
+        iniciar.reshape(20, 10, 100, 30);
+        registrar.reshape(130, 10, 100, 30);
+        modificar.reshape(240, 10, 100, 30);
+
+
+
+        iniciar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                entrarParque(e);
+            }
+        });
+
+        registrar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                registrarParque(e);
+            }
+        });
+
+        modificar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                modificarUsuario(e);
+            }
+        });
+
+    }
+
+    public void setOut(){
+
+        out.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                salir(e);
+            }
+        });
+    }
+
+    private void salir(ActionEvent e){
+        salir = true;
+
+    }
+
+    public boolean getSalir(){return salir;}
+
+
+    private void entrarParque(ActionEvent e){
+
+        if(alias != null) {
+            alias.setVisible(false);
+            txtAlias.setVisible(false);
+            nombre.setVisible(false);
+            txtNombre.setVisible(false);
+            contra.setVisible(false);
+            txtContra.setVisible(false);
+            registrarse.setVisible(false);
+        }
+
+        if(modificarse != null){
+            modificarse.setVisible(false);
+        }
+
+        alias = new JLabel("Alias: ");
+        txtAlias = new JTextField(10);
+        contra = new JLabel("Contrasenya: ");
+        txtContra = new JPasswordField(10);
+        entrar = new JButton("ENTRAR");
+        out = new JButton("LogOut");
+
+        add(alias);
+        add(txtAlias);
+        add(contra);
+        add(txtContra);
+        add(entrar);
+        add(out);
+
+
+        alias.reshape(20, 55, 100, 20);
+        txtAlias.reshape(120, 55, 100, 20);
+
+        contra.reshape(20, 75, 100, 20);
+        txtContra.reshape(120, 75, 100, 20);
+
+
+        entrar.reshape(20, 110, 100, 20);
+        out.reshape(160, 110, 100, 20);
+
+        out.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                salir(e);
+            }
+        });
+
+        entrar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                entro(e);
+            }
+        });
+    }
+
+    private void entro(ActionEvent e){
+
+        Runnable miRunnable = new Runnable() {
+            @Override
+            public void run() {
+                entrar.setVisible(false);
+
+                FWQ_Visitor probando = new FWQ_Visitor();
+
+                System.out.println(out.isEnabled());
+                out.setVisible(true);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException t) {
+                    t.printStackTrace();
+                }
+
+                if(txtAlias.getText() != "" && txtContra.getText() != "" && out.isEnabled()) {
+                    probando.recibirDatos(txtAlias.getText(), txtContra.getText());
+                }
+
+            }
+        };
+        Thread hilo = new Thread(miRunnable);
+        hilo.start();
+
+
+    }
+
+    private void registrarParque(ActionEvent e){
+
+        if(alias != null) {
+            alias.setVisible(false);
+            txtAlias.setVisible(false);
+            contra.setVisible(false);
+            txtContra.setVisible(false);
+            entrar.setVisible(false);
+            out.setVisible(false);
+        }
+
+        if(nombre != null){
+            nombre.setVisible(false);
+            txtNombre.setVisible(false);
+            modificarse.setVisible(false);
+        }
+
+
+        alias = new JLabel("Alias: ");
+        txtAlias = new JTextField(10);
+        nombre = new JLabel("Nombre: ");
+        txtNombre = new JTextField(10);
+        contra = new JLabel("Contrasenya: ");
+        txtContra = new JPasswordField(10);
+
+        add(alias);
+        add(txtAlias);
+        add(nombre);
+        add(txtNombre);
+        add(contra);
+        add(txtContra);
+
+        alias.reshape(20, 55, 100, 20);
+        txtAlias.reshape(120, 55, 100, 20);
+
+        nombre.reshape(20, 75, 100, 20);
+        txtNombre.reshape(120, 75, 100, 20);
+
+        contra.reshape(20, 95, 100, 20);
+        txtContra.reshape(120, 95, 100, 20);
+
+
+        registrarse = new JButton("REGISTRAR");
+        add(registrarse);
+        registrarse.reshape(20, 130, 100, 20);
+
+        registrarse.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                registro(e);
+            }
+        });
+    }
+
+    private void registro(ActionEvent e){
+        FWQ_Visitor probando = new FWQ_Visitor();
+
+        if(txtAlias.getText() != "" && txtContra.getText() != "") {
+            probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
+        }
+
+    }
+
+    private void modificarUsuario(ActionEvent e) {
+
+        if (alias != null) {
+            alias.setVisible(false);
+            txtAlias.setVisible(false);
+            contra.setVisible(false);
+            txtContra.setVisible(false);
+            entrar.setVisible(false);
+            out.setVisible(false);
+        }
+
+        if (nombre != null && registrarse != null) {
+            nombre.setVisible(false);
+            txtNombre.setVisible(false);
+            registrarse.setVisible(false);
+        }
+
+
+        alias = new JLabel("Alias: ");
+        txtAlias = new JTextField(10);
+        nombre = new JLabel("Nuevo nombre: ");
+        txtNombre = new JTextField(10);
+        contra = new JLabel("Nueva contrasenya: ");
+        txtContra = new JPasswordField(10);
+
+        add(alias);
+        add(txtAlias);
+        add(nombre);
+        add(txtNombre);
+        add(contra);
+        add(txtContra);
+
+        modificarse = new JButton("Modificar");
+        add(modificarse);
+        modificarse.reshape(20, 130, 100, 20);
+
+
+        alias.reshape(20, 55, 120, 20);
+        txtAlias.reshape(140, 55, 100, 20);
+
+        nombre.reshape(20, 75, 120, 20);
+        txtNombre.reshape(140, 75, 100, 20);
+
+        contra.reshape(20, 95, 120, 20);
+        txtContra.reshape(140, 95, 100, 20);
+
+        modificarse.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                modificar(e);
+            }
+        });
+    }
+
+    private void modificar(ActionEvent e){
+        FWQ_Visitor probando = new FWQ_Visitor();
+
+        if(txtAlias.getText() != "" && txtContra.getText() != "") {
+            probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
+        }
+    }
 }

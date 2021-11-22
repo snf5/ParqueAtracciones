@@ -1,8 +1,6 @@
 import com.mongodb.*;
-import com.mongodb.client.MongoClients;
+import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
 import java.util.*;
@@ -28,7 +26,71 @@ public class FWQ_Registry {
         } catch(Exception io) {
             io.getMessage();
         }
+
+        //comprobar si esta en la base de datos para ver si hay que modificar o insertar
+        //comprobar(p_datos);
+
         return p_datos;
+    }
+
+    //todo
+    //todo
+    //todo
+    public boolean comprobar(String credencials) {
+
+        System.out.println("recibo: " + credencials);
+
+        String[] credenciales = credencials.split(", ");
+        String alias = "";
+        String nombre = "";
+        String contra = "";
+        HashMap<String, String> credence = new HashMap<>();
+        boolean solution = false;
+
+        MongoClient cliente = MongoClients.create("mongodb://localhost:27017");
+        MongoDatabase db = cliente.getDatabase("parque");
+        MongoCollection<Document> docu = db.getCollection("usuario");
+        FindIterable<Document> documents = docu.find();
+        for(Document document : documents) {
+            alias = document.get("alias").toString();
+            nombre = document.get("nombre").toString();
+
+            credence.put(alias,"");
+        }
+
+        Document busco = new Document("alias", credenciales[0]);
+
+        Document nuevo = new Document(), nuevo2 = new Document();
+
+        if(credenciales.length == 2) {
+            //cambiamos nombre
+             nuevo = new Document("$set", new Document("nombre", credenciales[1]));
+
+        }else{
+            //cambiamos contra
+            if(credenciales[1].equals("")) {
+                nuevo = new Document("$set", new Document("contrasenya", credenciales[2]));
+            }else{
+                nuevo = new Document("$set", new Document("contrasenya", credenciales[2]));
+                nuevo2 = new Document("$set", new Document("nombre", credenciales[1]));
+            }
+            //cambiamos ambas
+        }
+
+        //docu.findOneAndUpdate();
+
+        for(String datos : credence.keySet()) {
+            if(credenciales[0].equals(datos)) {
+                solution = true;
+                System.out.println("lo encuentro");
+                docu.findOneAndUpdate(busco, nuevo);
+                if(nuevo2.isEmpty() == false){
+                    docu.findOneAndUpdate(busco, nuevo2);
+                }
+
+            }
+        }
+        return solution;
     }
 
     public void escribeSocket(Socket p_sk, String p_datos) {
@@ -50,9 +112,13 @@ public class FWQ_Registry {
 
         MongoCollection col = db.getCollection("usuario");
 
+        //DBCollection prueba = (DBCollection) db.getCollection("usuario");
+
         Document docu = new Document("alias", alias).append("nombre", nombre).append("contrasenya", contra);
 
         col.insertOne(docu);
+
+        //prueba.insert((DBObject) docu);
     }
 
     public int formulario(String p_Cadena) {
@@ -101,6 +167,7 @@ public class FWQ_Registry {
         //SpringApplication.run(FWQ_Registry.class, args);
 
         int jj = -1;
+        boolean modifica = false;
 
         while (jj != 0) {  //para que este siemre escuchando
 
@@ -126,8 +193,14 @@ public class FWQ_Registry {
                     //while (verificacion != -1) {  //hay que quitarlo, hace que este escuchando siempre
                         Cadena = fwq.leeSocket(skCliente, Cadena);
 
-                        verificacion = fwq.formulario(Cadena);
-                        fwq.escribeSocket(skCliente, "Registro completado con éxito.");
+                        modifica = fwq.comprobar(Cadena);
+
+                        if(modifica == true){
+                            //llamar al metodo de modificar
+                        }else {
+                            verificacion = fwq.formulario(Cadena);
+                            fwq.escribeSocket(skCliente, "Registro completado con éxito.");
+                        }
                     //}
 
                     skCliente.close();

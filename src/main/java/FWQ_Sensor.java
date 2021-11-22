@@ -83,22 +83,23 @@ public class FWQ_Sensor {
         puertoKafka = args[1];
         id = args[2];
 
-        System.out.print("Sensor de la atraccion " + id);
+        int opcion = 0;
+        Scanner scan = new Scanner(System.in);
+        System.out.println("Sensor de la atraccion " + id);
+        System.out.println("1. Meter a mano el numero de visitantes");
+        System.out.println("2. Enviar cada 1/3 segundos visitantes aleatorios");
+        opcion = scan.nextInt();
 
-        int numero = (int)(Math.random()*3+1);
 
-        //cada x tiempo (entre 1 y 3 segundos) se enviará el numero de visitantes
-
-        //crear funcion de productor, ya que solo es productor el sensor
 
         String datos = "";
-
         datos += hostKafka;
         datos += ":";
         datos += puertoKafka;
 
         String finalDatos = datos;
         String finalId = id;
+        int finalOpcion = opcion;
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -106,26 +107,21 @@ public class FWQ_Sensor {
 
                     try{
                         int numero = (int)(Math.random()*6+3);
-
                         numero *= 1000;
-
                         Thread.sleep(numero);
-
-                        productor(finalDatos, finalId);
+                        productor(finalDatos, finalId, finalOpcion);
                     }catch (InterruptedException e){
                         e.printStackTrace();
                     }
                 }
             }
         };
-
         Thread hilo = new Thread(runnable);
         hilo.start();
-
     }
 
 
-    public static void productor(String datos, String id){
+    public static void productor(String datos, String id, int opcion){
 
         Properties proper = new Properties();
 
@@ -139,17 +135,15 @@ public class FWQ_Sensor {
 
         String tiempo = "";
 
-        //NO HACER RANDOM, valor aleartorio entre 2 numeros
-        int numero;
-        //int numero = (int)(Math.random()*100+50);
+        int numero = 0;
 
-        //hacer que se ingrese por teclado el numero de personas
-
-        Scanner scan = new Scanner(System.in);
-        System.out.print("Introduce el numero de visitantes: ");
-        numero = scan.nextInt();
-
-        //prueba
+        if(opcion == 1){
+            Scanner scan = new Scanner(System.in);
+            System.out.print("Introduce el numero de visitantes: ");
+            numero = scan.nextInt();
+        }else if(opcion == 2){
+            numero = (int)(Math.random()*100+25);
+        }
 
         System.out.println(numero);
 
@@ -162,5 +156,4 @@ public class FWQ_Sensor {
         productor.flush();
         productor.close();
     }
-
 }

@@ -8,6 +8,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.bson.Document;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
 import java.util.Collections;
@@ -23,6 +25,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import javax.swing.*;
 
 public class FWQ_Engine {
 
@@ -164,14 +168,16 @@ public class FWQ_Engine {
 
 
         if(comprobar) {
-            if(parkFull) {
+            if(parkFull == false) {
                 //le tengo que enviar el mapa2 ya que es el que tiene tiempo:ubicacion
                 producer.send(new ProducerRecord<String, String>("acceso","keya","J" + String.valueOf(num) + ":" + mapa2.toString() + ":" + usuario));
             } else {
+
                 String noCabe = usuario +":ko:0";
                 producer.send(new ProducerRecord<String, String>("acceso","keya", noCabe));
             }
         } else {
+
             String noCabe = usuario +":ko:0";
             producer.send(new ProducerRecord<String, String>("acceso","keya",noCabe));
         }
@@ -207,52 +213,73 @@ public class FWQ_Engine {
                 for (ConsumerRecord<String, String> result : records) {
                     System.out.println("Recibo del visitante: " + result.value().toString());
                     credencials = result.value().toString().split(":");
-                }
 
-                //credencials[0] = usuario
-                boolean siEsta = false;
 
-                //repasar pq no funciona bienn
+                    //credencials[0] = usuario
+                    boolean siEsta = false;
 
-                if(credencials.length != 0) {
-                    for (String datos : players.keySet()) {
-                        // System.out.println(datos + "-----------" + credencials[0]);
+                    //repasar pq no funciona bienn
 
-                        if (datos.equals(credencials[0].toString())) {
-                            siEsta = true;
-                            System.out.println("si estaaaaa");
-                            cEng = 1;
+                    if (credencials.length != 0) {
+                        if (credencials.length == 3) {
+
+                            for (String datos : players.keySet()) {
+                                // System.out.println(datos + "-----------" + credencials[0]);
+                                if (datos.equals(credencials[0].toString())) {
+                                    siEsta = true;
+                                    cEng = 1;
+                                }
+                            }
+
+                            if (credencials.length != 0 && siEsta == false) {
+                                comprobacion = comprobar(credencials);
+
+                                if (numVisit < maxVisit) {
+                                    lleno = false;
+                                } else {
+                                    lleno = true;
+                                }
+                                //System.out.println(lleno + " " + comprobacion + " " + credencials[0] + " " + localhost);
+
+
+                                //System.out.println("numvisit: " + numVisit + " maxvisit: " + maxVisit);
+                                if (comprobacion && numVisit < maxVisit) {
+                                    System.out.println("me metoooo");
+                                    //System.out.println("me meto a añadir usuarios");
+                                    numVisit++;
+                                    playersPos.put("J" + numVisit, credencials[2]);
+                                    players.put("J" + numVisit, credencials[0]);
+
+                                    producerEng(lleno, comprobacion, credencials[0], localhost);
+
+                                    cEng = 1;
+
+                                } else {
+                                    producerEng(lleno, comprobacion, credencials[0], localhost);
+                                }
+                            }
+                        } else {
+                            //recibo jugadores que ya estan en el parque
+                            //recibo vero:vero:5,5:8,14
+                            comprobacion = comprobar(credencials);
+
+                            if (numVisit < maxVisit) {
+                                numVisit++;
+                                playersPos.put("J" + numVisit, credencials[2]);
+                                players.put("J" + numVisit, credencials[0]);
+
+                                lleno = false;
+
+                                producerEng(lleno, comprobacion, credencials[0], localhost);
+
+                                cEng = 1;
+                            } else {
+                                lleno = true;
+                                producerEng(lleno, comprobacion, credencials[0], localhost);
+                            }
                         }
+
                     }
-                }
-
-                if(credencials.length != 0 && siEsta == false) {
-                    comprobacion = comprobar(credencials);
-
-                    if (numVisit < maxVisit) {
-                        lleno = true;
-                    } else {
-                        lleno = false;
-                    }
-                    //System.out.println(lleno + " " + comprobacion + " " + credencials[0] + " " + localhost);
-
-
-
-                    //System.out.println("numvisit: " + numVisit + " maxvisit: " + maxVisit);
-                    if (comprobacion && numVisit < maxVisit) {
-                        //System.out.println("me meto a añadir usuarios");
-                        numVisit++;
-                        playersPos.put("J" + numVisit, credencials[2]);
-                        players.put("J" + numVisit, credencials[0]);
-
-                        producerEng(lleno, comprobacion, credencials[0], localhost);
-                        System.out.println("Jugadores existente: " + playersPos.toString());
-                        cEng = 1;
-
-                    }else{
-                        producerEng(lleno, comprobacion, credencials[0], localhost);
-                    }
-
                 }
             } finally {
                 if(credencials.length != 0) {
@@ -359,17 +386,17 @@ public class FWQ_Engine {
                     //habra que cambiarlo
                     //mapa2.put(newMap.get(claveDos),parto[1]);
                     //if(newMap.get(claveDos).equals()){
-
                     //}else {
+
                         mapa2.put(parto[1], newMap.get(claveDos));
+
+
                     //}
 
                 }
             }
         }
-
         //System.out.println("mapa finaaaaaal: " + mapa2.toString());
-
         //System.out.println("mapa en actualizo: " + mapaVisitante.toString());
 
         return mapa2.toString();
@@ -419,32 +446,54 @@ public class FWQ_Engine {
 
     //todo metodo nuevo
     //funciona
-    public static String transmisionn(String p_host, String p_puerto){
+    public static String transmisionn(String p_host, String p_puerto, boolean cerrar){
 
+        Socket skCliente = new Socket();
 
-        try{
-            Socket skCliente = new Socket(p_host, Integer.parseInt(p_puerto));
-
-            System.out.println("Pásame el mapa.");
-
-            escribirSocket(skCliente, "hola");
-
-            String datos = "";
-
-            datos = leeSocket(skCliente, datos);
-
-            mapa = datos;
-
-            System.out.println("Recibo el mapa de atracciones: " + datos);
-
-        }catch(Exception io){
+        if(cerrar == true){
+            try {
+                skCliente.close();
+                System.exit(0);
+            } catch (Exception io) {
             io.getMessage();
+        }
+        }else {
+
+            try {
+                skCliente.close();
+
+                skCliente = new Socket(p_host, Integer.parseInt(p_puerto));
+
+                System.out.println("Pásame el mapa.");
+
+                escribirSocket(skCliente, "hola");
+
+                String datos = "";
+
+                datos = leeSocket(skCliente, datos);
+
+                skCliente.close();
+
+                mapa = datos;
+
+                System.out.println("Recibo el mapa de atracciones: " + datos);
+
+                //cerrar socket
+
+            } catch (Exception io) {
+                io.getMessage();
+            }
         }
 
         return mapa;
     }
 
+
     public static void main(String[] args) {
+
+        cerrar cierr = new cerrar();
+        cierr.setVisible(true);
+
         FWQ_Engine fwq = new FWQ_Engine();
         String IPBro = "";
         String puertoBro = "";
@@ -468,7 +517,6 @@ public class FWQ_Engine {
         gestorDeColas = args[0] + ":" + args[1];
 
         /*
-
          */
 
         while(true) {
@@ -479,8 +527,9 @@ public class FWQ_Engine {
 
 
             try {
+                boolean cierro = false;
 
-                mapa = transmisionn(IPBro, puertoBro);
+                mapa = transmisionn(IPBro, puertoBro, cierro);
                 Thread.sleep(100);
                 //en mapa tengo shambala=25...
                 //hay que actualizar el mapa de 25=5,5
@@ -509,282 +558,35 @@ public class FWQ_Engine {
     }
 }
 
-/*
-import com.mongodb.client.*;
-import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.bson.Document;
+class cerrar extends JFrame{
 
-import java.io.*;
-import java.net.Socket;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Properties;
+    private JButton cerrar;
 
-import static com.mongodb.client.model.Filters.eq;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+    public cerrar(){
+        setTitle("Engine");
+        setResizable(false);
+        setSize(390, 220);
+        setLayout(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+        cerrar = new JButton("Cerrar engine");
+        add(cerrar);
+        cerrar.reshape(60, 10, 200, 30);
 
-public class FWQ_Engine {
-    // id + nombre
-    private HashMap<String, String> players = new HashMap<>();
-    // id + pos
-    private HashMap<String, String> playersPos = new HashMap<>();
-    // id + dest
-    private HashMap<String, String> playersDes = new HashMap<>();
-    // tiempoEsp + pos
-    private static HashMap<String, String> mapa = new HashMap<>();
-    // num visitantes
-    private int numVisit = 0;
-    // num máximo visitantes
-    private static int maxVisit;
-
-
-    public String leeSocket(Socket p_sk, String p_Datos) {
-        try {
-            InputStream aux = p_sk.getInputStream();
-            DataInputStream flujo = new DataInputStream(aux);
-            p_Datos = new String();
-            p_Datos = flujo.readUTF();
-        } catch (Exception io) {
-            io.getMessage();
-        }
-        return p_Datos;
-    }
-
-    public void escribirSocket(Socket p_sk, String p_Datos) {
-        try {
-            OutputStream aux = p_sk.getOutputStream();
-            DataOutputStream flujo = new DataOutputStream(aux);
-            flujo.writeUTF(p_Datos);
-        } catch(Exception io) {
-            io.getMessage();
-        }
-    }
-
-    public void producerVis(String localhost) {
-        Properties properties = new Properties();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, localhost);
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-
-        KafkaProducer<String,String> producer = new KafkaProducer<>(properties);
-
-        producer.send(new ProducerRecord<String, String>("topicmapa",mapa.toString() + ":" + playersPos.toString() + ":" + playersPos.toString()));
-    }
-
-    // id:posicion:destino
-    public void consumerVis(String visitante, String localhost) {
-        Properties properties = new Properties();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, localhost);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, "topicmapa");
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
-        consumer.subscribe(Collections.singleton("topicmapa"));
-
-        String[] visit = new String[0];
-        while(true) {
-            ConsumerRecords<String, String> records = consumer.poll(100);
-            for(ConsumerRecord<String, String> datos : records) {
-                visit = datos.value().toString().split(":");
+        cerrar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cerrarEngine(e);
             }
-            if(playersDes.containsKey(visit[0])) {
-                playersDes.replace(visit[0],visit[2]);
-            }
-            if(playersPos.containsKey(visit[0])) {
-                playersPos.replace(visit[0],visit[1]);
-            }
-        }
+        });
     }
 
+    private void cerrarEngine(ActionEvent e){
 
-    //if the credentials are correct, producer will send the map
-
-public void producerEng(boolean parkFull, boolean comprobar, String usuario, String localhost) {
-    Properties properties = new Properties();
-    properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, localhost);
-    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-
-    KafkaProducer<String,String> producer = new KafkaProducer<>(properties);
-
-    if(comprobar) {
-        if(parkFull) {
-            producer.send(new ProducerRecord<String, String>("topiccredenciales",usuario + ":" + mapa.toString()));
-        } else {
-            producer.send(new ProducerRecord<String, String>("topiccredenciales", "Parque lleno."));
-        }
-    } else {
-        producer.send(new ProducerRecord<String, String>("topiccredenciales","ko"));
-    }
-
-    producer.flush();
-    producer.close();
-}
-
-
-    //Consumer read and check if the credentials are correct
-
-    // usuario:contraseña:posición
-    public void consumerEng(String credenciales, String localhost) {
-        Properties properties = new Properties();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, localhost);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, "topiccredenciales");
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
-        consumer.subscribe(Collections.singleton("topiccredenciales"));
-
-        boolean comprobacion;
-        boolean lleno;
-        String[] credencials = new String[0];
-        while(true) {
-            ConsumerRecords<String, String> records = consumer.poll(100);
-            for(ConsumerRecord<String, String> result : records) {
-                credencials = result.value().toString().split(":");
-            }
-            comprobacion = comprobar(credencials);
-            if(numVisit < maxVisit) {
-                lleno = true;
-            } else {
-                lleno = false;
-            }
-            producerEng(lleno, comprobacion, credencials[0], localhost);
-            if(comprobacion && numVisit < maxVisit) {
-                numVisit++;
-                playersPos.put("J" + numVisit,credencials[2]);
-                players.put("J" + numVisit,credencials[0]);
-            }
-        }
-    }
-
-    public boolean comprobar(String[] credenciales) {
-        String client = "";
-        String password = "";
-        HashMap<String, String> credence = new HashMap<>();
-        boolean solution = false;
-
-        MongoClient cliente = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase db = cliente.getDatabase("Parque");
-        MongoCollection<Document> docu = db.getCollection("Atraccion");
-        FindIterable<Document> documents = docu.find();
-        for(Document document : documents) {
-            client = document.get("alias").toString();
-            password = document.get("contrasenya").toString();
-            credence.put(client, password);
-        }
-        for(String datos : credence.keySet()) {
-            if(credenciales[0].equals(datos) && credenciales[1].equals(credence.get(datos))) {
-                solution = true;
-            }
-        }
-        return solution;
-    }
-
-    public static HashMap<String,String> actualizarMapa(HashMap<String, String> map) {
-        HashMap<String,String> newMap = new HashMap<>();
-        String hols = "";
-        String holsPos = "";
-        //MongoClient cliente = MongoClients.create("mongodb+srv://sergiopaco:Sistemas12345@cluster0.wyb5t.mongodb.net/par?retryWrites=true&w=majority");
-        MongoClient cliente = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase db = cliente.getDatabase("Parque");
-        MongoCollection<Document> docu = db.getCollection("Atraccion");
-        FindIterable<Document> documents = docu.find();
-        for(Document document : documents) {
-            hols = document.get("id").toString();
-            holsPos = document.get("ubicacion").toString();
-            newMap.put(hols,holsPos);
-        }
-        for(String clave : map.keySet()) {
-            for(String claveDos : newMap.keySet()) {
-                if(claveDos.equals(clave)) {
-                    newMap.put(map.get(clave),newMap.get(claveDos));
-                }
-            }
-        }
-        return newMap;
-    }
-
-    public String[] separador(String[] fragmento) {
-        String[] resultado = new String[0];
-        String[] resultadoDos = new String[0];
-        String[] resultadoTres = new String[0];
-        for(int i = 0; i < fragmento.length; i++) {
-            resultado = fragmento[i].split(",");
-        }
-        for(int i = 0; i < resultado.length; i++) {
-            resultadoDos = resultado[i].split("\\}");
-        }
-        for(int i = 0; i < resultadoDos.length; i++) {
-            resultadoTres = resultadoDos[i].split("=");
-        }
-        return resultadoTres;
-    }
-
-    public HashMap<String, String> transmision(String p_host, String p_puerto) {
-        String[] mensajeUno;
-        String[] mensajeTerminado;
-        HashMap<String,String> mapaServidor = new HashMap<>();
-        InputStreamReader isr = new InputStreamReader(System.in);
-        BufferedReader br = new BufferedReader(isr);
-
-        try {
-            Socket skCliente = new Socket(p_host, Integer.parseInt(p_puerto));
-            System.out.println("Pásame el mapa.");
-            mensajeUno = br.readLine().toString().split("\\{");
-            mensajeTerminado = separador(mensajeUno);
-            for(int i = 0; i < mensajeTerminado.length; i++) {
-                mapaServidor.put(mensajeTerminado[i],mensajeTerminado[i+1]);
-                i++;
-            }
-            escribirSocket(skCliente,"Operación realizada con éxito");
-            skCliente.close();
-        } catch(Exception io){
-            io.getMessage();
-        }
-        return mapaServidor;
-    }
-
-
-    public static void main(String[] args) {
         FWQ_Engine fwq = new FWQ_Engine();
-        String IPBro = "";
-        String puertoBro = "";
-        String visit = "";
-        String gestorDeColas = "";
 
-        if(args.length < 5) {
-            System.out.println("Faltan argumentos por pasar.");
-            System.exit(1);
-        }
+        boolean cerrar = true;
 
-        IPBro = args[0];
-        puertoBro = args[1];
-        visit = args[2];
-        gestorDeColas = args[3] + ":" + args[4];
-        maxVisit = Integer.parseInt(visit);
-        while(true) {
-            mapa = actualizarMapa(fwq.transmision(IPBro,puertoBro));
-            fwq.consumerEng("",gestorDeColas);
-            fwq.consumerVis("",gestorDeColas);
-            fwq.producerVis(gestorDeColas);
-        }
+        fwq.transmisionn("localhost", "9998", cerrar);
     }
 }
- */
-
-
-
