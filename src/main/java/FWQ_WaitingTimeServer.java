@@ -48,6 +48,14 @@ public class FWQ_WaitingTimeServer {
 
     public static Map<String, String> map = new HashMap<>();
 
+    //para saber si han caido sensores o no
+    public static Map<String, String> copiaMap = new HashMap<>();
+
+    public static Map<String, Integer> contadorCaida = new HashMap<String, Integer>();
+
+    public static int pareceCaido = 0;
+
+
 
     public static String leeSocket (Socket p_sk, String p_datos){
         try{
@@ -99,6 +107,34 @@ public class FWQ_WaitingTimeServer {
 
         int verificacion = 0;
 
+        /*
+        map.put("furius", "40");
+        map.put("shambala", "30");
+
+        copiaMap.put("furius", "40");
+        copiaMap.put("shambala", "30");
+
+
+        for(int i = 0;i < 20;i++){
+            int num = 40 + i + 1;
+            String cambio = String.valueOf(num);
+            map.replace("furius",cambio);
+            if(i > 12){
+                map.replace("shambala",cambio);
+            }
+            System.out.println("sumooooo " + map.toString());
+            System.out.println("sumooooo " + copiaMap.toString());
+
+            caidaSensor();
+            System.out.println("map: " + map.toString());
+            System.out.println("copiaMap: " + copiaMap.toString());
+            for(Map.Entry<String, String> entry: map.entrySet()){
+                copiaMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+         */
+
+
         //try{
             FWQ_WaitingTimeServer fwq = new FWQ_WaitingTimeServer();
 
@@ -119,6 +155,8 @@ public class FWQ_WaitingTimeServer {
 
                 while (true) {
                     //añadido esto juevea
+
+
                     consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
                     while(map.isEmpty()) {
                         consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
@@ -127,6 +165,8 @@ public class FWQ_WaitingTimeServer {
                         socketDatos(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
                     }
                     consumidor(hostKafka, puertoKafka, fwq, Integer.parseInt(puerto));
+
+
                 }
 
                 //todo hacer funcion de socket para ir pasandole la informacióny añadir en este metodo un while(true)
@@ -190,9 +230,9 @@ public class FWQ_WaitingTimeServer {
 
         String datoss = "";
 
+
         try{
             //while(true) {
-
                 ConsumerRecords<String, String> records = consumer.poll(100);
                 //todo
                 int fre = 0;
@@ -228,9 +268,7 @@ public class FWQ_WaitingTimeServer {
                     nuevoTiempo += " ";
 
                     System.out.println(nuevoTiempo);
-
                 }
-
                 //REPASAR EL MAP PARA PASARSELO A ENGINE
                 if(nuevoTiempo != "") {
                     comprobar(id, tiempo);
@@ -242,8 +280,55 @@ public class FWQ_WaitingTimeServer {
             //System.out.println("se petaaaaaaaa");
         }
 
-        return "";
 
+        System.out.println("map antes: " + map.toString());
+        System.out.println("copiaMap antes: " + copiaMap.toString());
+        caidaSensor();
+        System.out.println("map: " + map.toString());
+        System.out.println("copiaMap: " + copiaMap.toString());
+        for(Map.Entry<String, String> entry: map.entrySet()){
+            copiaMap.put(entry.getKey(), entry.getValue());
+        }
+
+
+
+        return "";
+    }
+
+    public static void caidaSensor(){
+
+        String valor1 = "", valor2 = "", caido = "";
+        char primero;
+
+        for(String clave:map.keySet()){
+            for(String clave2:copiaMap.keySet()){
+                if(clave.equals(clave2)){
+                    valor1 = map.get(clave);
+                    valor2 = copiaMap.get(clave2);
+
+                    System.out.println("valor1: " + valor1 + " valor2: " + valor2);
+
+                    System.out.println("contador: " + contadorCaida.get(clave2));
+                    Integer cont = contadorCaida.get(clave2);
+                    System.out.println("ooo: " + cont);
+
+                    if(valor1.equals(valor2)){
+                        contadorCaida.remove(clave2);
+                        cont++;
+                        contadorCaida.put(clave2, cont);
+                    }else{
+                        contadorCaida.remove(clave2);
+                        contadorCaida.put(clave2, 0);
+                    }
+
+                    if(cont >= 15 && valor1.equals(valor2)){
+                        primero = clave2.charAt(0);
+                        caido = primero + "?";
+                        map.replace(clave, caido);
+                    }
+                }
+            }
+        }
     }
 
     public static void comprobar(String id, String tiempo){
@@ -264,11 +349,14 @@ public class FWQ_WaitingTimeServer {
                 if(num == 1){
                     map.remove(id);
                     map.put(id, tiempo);
+                    copiaMap.remove(id);
+                    copiaMap.put(id, tiempo);
                 }else if(num == 2){
                     map.put(id, tiempo);
+                    copiaMap.put(id, tiempo);
+                    contadorCaida.put(id, 0);
                 }
             }
-
             System.out.println(map);
     }
 

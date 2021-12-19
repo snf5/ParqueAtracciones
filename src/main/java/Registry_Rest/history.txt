@@ -1,0 +1,28 @@
+El usuario 192.168.56.1 ha creado su cuenta. Fecha: 16/12/2021.
+El usuario 192.168.56.1 ha creado su cuenta. Fecha: 16/12/2021.
+El usuario 123 ha creado su cuenta. Fecha: 16/12/2021.
+El usuario 12553 ha creado su cuenta. Fecha: 18/12/2021.
+Usuario: domingo / Ip:12553 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario domingo se ha registrado.
+Usuario: :id / Ip:12553333 / Acción: Error / Fecha: 19/12/2021 / Descripción: El usuario :id no existe, error al intentar modificarlo.
+Usuario: :domingo / Ip:12553333 / Acción: Error / Fecha: 19/12/2021 / Descripción: El usuario :domingo no existe, error al intentar modificarlo.
+Usuario: domingo / Ip:12553333 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario domingo ha modificado su perfil.
+Usuario: domingo / Ip:12553333 / Acción: Baja / Fecha: 19/12/2021 / Descripción: El usuario domingo ha eliminado su usuario.
+Usuario: prueba1 / Ip:125.533.33 / Acción: Error / Fecha: 19/12/2021 / Descripción: El usuario prueba1 no existe, error al intentar registrarse.
+Usuario: prueba4 / Ip:125.533.33 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario prueba4 se ha registrado.
+Usuario: prueba4 / Ip:125.533.33 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario prueba4 ha modificado su perfil.
+Usuario: prueba4 / Ip:125.533.33 / Acción: Baja / Fecha: 19/12/2021 / Descripción: El usuario prueba4 ha eliminado su usuario.
+Usuario: ll / Ip:125.533.33 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario ll se ha registrado.
+Usuario: q / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario q se ha registrado.
+Usuario: x / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario x se ha registrado.
+Usuario: qw / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario qw se ha registrado.
+Usuario: gh / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario gh se ha registrado.
+Usuario: q / Ip:192.168.56.1 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario q ha modificado su perfil.
+Usuario: q / Ip:192.168.56.1 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario q ha modificado su perfil.
+Usuario: noche / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario noche se ha registrado.
+Usuario: noche / Ip:192.168.56.1 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario noche ha modificado su perfil.
+Usuario: bn / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario bn se ha registrado.
+Usuario: bn / Ip:192.168.56.1 / Acción: Actualización / Fecha: 19/12/2021 / Descripción: El usuario bn ha modificado su perfil.
+Usuario: yj / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario yj se ha registrado.
+Usuario: df / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario df se ha registrado.
+Usuario: sd / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario sd se ha registrado.
+Usuario: zx / Ip:192.168.56.1 / Acción: Alta / Fecha: 19/12/2021 / Descripción: El usuario zx se ha registrado.

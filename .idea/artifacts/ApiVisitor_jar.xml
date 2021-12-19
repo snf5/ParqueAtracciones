@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="Waiting:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/Waiting_jar</output-path>
+  <artifact type="jar" name="ApiVisitor:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ApiVisitor_jar</output-path>
     <root id="archive" name="ParqueAtraccionesAPI.jar">
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" />

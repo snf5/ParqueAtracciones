@@ -1,16 +1,42 @@
 
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
 import java.util.*;
 
 import Formularios.Inicio;
 import Formularios.Registrar;
 import com.mongodb.MongoClient;
+//import org.apache.http.HttpResponse;
+//import org.apache.http.client.HttpClient;
+//import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.SingleClientConnManager;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -22,12 +48,46 @@ import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.*;
 import javax.swing.*;
 
+import java.util.Base64;
 
-class FWQ_Visitor {
+
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
+import java.net.MalformedURLException;
+import java.security.cert.Certificate;
+import java.util.logging.Logger;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.net.URLConnection;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
+
+class FWQ_VisitorApi {
 
     //
     private static String usu = "";
@@ -54,17 +114,20 @@ class FWQ_Visitor {
     private static Inicio login;
     private static Registrar miRegistrar;
 
-    private static logOut log;
-    private static inicio ini;
+    private static logOutApi log;
+    private static inicioApi ini;
 
     private static SecretKey key;
     private static Cipher cipher;
     private static String algoritmo = "AES";
     private static int keysize = 16;
 
+    private static boolean servidorCaido = false;
+
+    private static String ipVisitante = "";
+
     private static boolean activarEncriptacion = false;
 
-    private static boolean servidorCaido = false;
 
     private static String mapaNova = "";
 
@@ -124,11 +187,25 @@ class FWQ_Visitor {
 
     public static void main(String args[]) {
 
+
+
+        InetAddress adress = null;
+        try {
+            adress = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        ipVisitante = adress.getHostAddress();
+
+        System.out.println("yeee: " + ipVisitante);
+
+        System.out.println(ipVisitante);
+
+
         /* BORRAR
         log = new logOut();
         log.setVisible(true);
          */
-
         File archivo = null;
         FileReader fr = null;
         BufferedReader br = null;
@@ -151,35 +228,7 @@ class FWQ_Visitor {
         System.out.println(lakey);
         addKey(lakey);
 
-        System.out.println("simetrica: " + key.getEncoded());
-
-        /*
-        FileWriter fichero = null;
-        PrintWriter pw = null;
-        try{
-            fichero = new FileWriter("C:\\datosKey\\simetrica.txt");
-            pw = new PrintWriter(fichero);
-
-            pw.println(key);
-
-        }catch(Exception e){
-
-        }finally {
-            try{
-                if(null !=  fichero) {
-                    fichero.close();
-                }
-            }catch(Exception e2){
-
-            }
-        }
-         */
-
-        System.out.println(encriptar("hola"));
-
-        System.out.println(desencriptar(encriptar("hola")));
-
-        ini = new inicio();
+        ini = new inicioApi();
         ini.setVisible(true);
 
         xp = "1";
@@ -246,7 +295,6 @@ class FWQ_Visitor {
             ///usuario y contraseña
             entradaParque = productorCredenciales(usuario, contra, posicion);
 
-            //todo validar la encriptacion
             if(entradaParque.contains("no encriptado")){
                 while (entradaParque.contains("no enciptado")){
                     entradaParque = productorCredenciales(usuario, contra, posicion);
@@ -313,7 +361,7 @@ class FWQ_Visitor {
                 int contar = 0;
 
                 if (contar == 0) {
-                    FWQ_Visitor fwq = new FWQ_Visitor();
+                    FWQ_VisitorApi fwq = new FWQ_VisitorApi();
                     //ini.setOut();
                     if (ini.getSalir() == true) {
                         //salimos del parque
@@ -358,8 +406,6 @@ class FWQ_Visitor {
             }
         }
     }
-
-
 
     //los dos metodos de aqui abajo son para poder entrar al parque
     //consumidor que recibe por parte de engine la confirmación de acceso al parque
@@ -498,9 +544,12 @@ class FWQ_Visitor {
         //todo no activar encriptacion si encriptar esta a false
         String credencialesEncriptadas = "";
 
+        System.out.println("encriptadooooooooo " + activarEncriptacion);
+
         if(activarEncriptacion == false){
             credencialesEncriptadas = credenciales;
         }else{
+            System.out.println("teeeee");
             credencialesEncriptadas = encriptar(credenciales);
         }
 
@@ -1030,13 +1079,17 @@ class FWQ_Visitor {
 
         productor.send(new ProducerRecord<String, String>("topicmapa", "keyA", informacionPosicionEncriptadas));
 
+        //productor.send(new ProducerRecord<String, String>("topicmapa", "keyA", informacionPosicion));
+
         productor.flush();
         productor.close();
 
         if(ini.getSalir() == true){
             System.exit(0);
         }
+
         //System.out.println("funcionaaaaa");
+
     }
 
     //consumidor que va recibiendo el mapa para mostrarlo
@@ -1103,6 +1156,7 @@ class FWQ_Visitor {
             //elMapa = "ko:00";
         }
         //todo
+        System.out.println("elmapaencriptado: " + elMapaEncriptado);
         return elMapaEncriptado;
     }
 
@@ -1167,8 +1221,6 @@ class FWQ_Visitor {
         String limpiarCiudades = ciudades.substring(1, ciudades.length()-1);
         String[] dividir = limpiarCiudades.split(", ");
         int ix = 1, iy = 1;
-
-        //System.out.println("las ciudadeeeeeeeeeeeeeees" + ciudades.toString());
 
         System.out.println("Ciudades del mapa");
         for(int ciu = 0;ciu < dividir.length;ciu++){
@@ -1246,43 +1298,293 @@ class FWQ_Visitor {
             System.out.println("Servidor de tiempos de espera caido, no se estan actualizando los tiempos de espera");
         }
 
+
     }
 
 
-    //todo listo
+    //todo
+    //todo
+    //todo cambiar por Api
     //esta es la parte que se comunica con registry
     //faltaria revisar el modificar el usuario
     public static Boolean registrar(String alias, String usuario, String contrasenya) {
+
+        File archivo = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+
+        String linea;
+        String laUrl = "";
+
+        try {
+            archivo = new File("C:\\datosVisitor\\datosRegistry.txt");
+            fr = new FileReader(archivo);
+            br = new BufferedReader(fr);
+
+            while((linea = br.readLine()) != null){
+                laUrl = linea;
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        System.out.println(laUrl);
 
         aliasUsu = alias;
         usu = usuario;
         contras = contrasenya;
 
         boolean correcto = false;
+        //respuesta = client.execute(post);
+        //responseString = new BasicResponseHandler().handleResponse(respuesta);
+        //System.out.println(responseString);
+
+        //todo
+        //HttpPost post = new HttpPost(laUrl);
+        //HttpResponse respuesta = null;
+        //String responseString = null;
+
 
         try {
-            Socket skCliente = new Socket(hostRegistry, Integer.parseInt(puertoRegistry));
+            var values = new HashMap<String, String>(){{
+                put("alias", alias);
+                put("nombre", usuario);
+                put("contrasenya", contrasenya);
+                InetAddress adress = InetAddress.getLocalHost();
+                ipVisitante = adress.getHostAddress();
+                put("ip", ipVisitante);
+            }};
 
-            escribeSocket(skCliente, aliasUsu, usu, contras);
+            var objectMapper = new ObjectMapper();
+            String requestBody = objectMapper.writeValueAsString(values);
+            System.out.println(requestBody);
 
-            String datos = "";
+            System.out.println(laUrl);
 
-            datos = leeSocket(skCliente, datos);
 
-            System.out.print(datos);
 
-            if(datos != ""){
-                correcto = true;
+            HttpClient client = HttpClient.newHttpClient();
+            System.out.println(HttpRequest.BodyPublishers.ofString(requestBody).toString());
+
+            TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+            };
+
+            try {
+                // Install the all-trusting trust manager
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            }catch(NoSuchAlgorithmException e){
+
+            }catch(KeyManagementException e2){
+
             }
 
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+
+            URL myUrl = new URL(laUrl);
+            System.out.println("URL: " + myUrl);
+            HttpsURLConnection conn = (HttpsURLConnection)myUrl.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setDoOutput(true);
+
+            DataOutputStream output = new DataOutputStream(conn.getOutputStream());
+
+            output.writeBytes(requestBody);
+            output.flush();
+            output.close();
+
+            int responseCode = conn.getResponseCode();
+            System.out.println("responseCode: " + responseCode);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while((inputLine = in.readLine()) != null){
+                response.append(inputLine);
+            }
+
+            in.close();
+
+            /*
+            HttpRequest request = HttpRequest.newBuilder()
+                    .header("Content-Type", "application/json")
+                    .uri(URI.create(laUrl))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println(response.body());
+
+             */
+
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
         } catch (Exception e) {
-
+            System.out.println("no funciona 2");
         }
-
 
         return correcto;
     }
 
+
+    public static boolean modificarUsuario(String alias, String usuario, String contrasenya){
+
+        File archivo = null;
+        FileReader fr = null;
+        BufferedReader br = null;
+        String linea;
+        String laUrl = "";
+
+        try {
+            archivo = new File("C:\\datosVisitor\\datosRegistry.txt");
+            fr = new FileReader(archivo);
+            br = new BufferedReader(fr);
+
+            while((linea = br.readLine()) != null){
+                laUrl = linea;
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        System.out.println(laUrl);
+
+        laUrl += alias;
+
+        aliasUsu = alias;
+        usu = usuario;
+        contras = contrasenya;
+
+        boolean correcto = false;
+        //respuesta = client.execute(post);
+        //responseString = new BasicResponseHandler().handleResponse(respuesta);
+        //System.out.println(responseString);
+
+        //todo
+        //HttpPost post = new HttpPost(laUrl);
+        //HttpResponse respuesta = null;
+        //String responseString = null;
+
+
+        try {
+            var values = new HashMap<String, String>(){{
+                put("alias", alias);
+                if(usuario != "") {
+                    put("nombre", usuario);
+                }
+                if(contrasenya != "") {
+                    put("contrasenya", contrasenya);
+                }
+                InetAddress adress = InetAddress.getLocalHost();
+                ipVisitante = adress.getHostAddress();
+                put("ip", ipVisitante);
+            }};
+
+            var objectMapper = new ObjectMapper();
+            String requestBody = objectMapper.writeValueAsString(values);
+            System.out.println(requestBody);
+
+            System.out.println(laUrl);
+
+            HttpClient client = HttpClient.newHttpClient();
+            System.out.println(HttpRequest.BodyPublishers.ofString(requestBody).toString());
+            TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+            };
+            try {
+                // Install the all-trusting trust manager
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            }catch(NoSuchAlgorithmException e){
+
+            }catch(KeyManagementException e2){
+
+            }
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+
+            URL myUrl = new URL(laUrl);
+            System.out.println("URL: " + myUrl);
+            HttpsURLConnection conn = (HttpsURLConnection)myUrl.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setDoOutput(true);
+
+            DataOutputStream output = new DataOutputStream(conn.getOutputStream());
+
+            output.writeBytes(requestBody);
+            output.flush();
+            output.close();
+            int responseCode = conn.getResponseCode();
+            System.out.println("responseCode: " + responseCode);
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+            while((inputLine = in.readLine()) != null){
+                response.append(inputLine);
+            }
+            in.close();
+            /*
+            HttpRequest request = HttpRequest.newBuilder()
+                    .header("Content-Type", "application/json")
+                    .uri(URI.create(laUrl))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+             */
+
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
+        } catch (Exception e) {
+            System.out.println("no funciona 2");
+        }
+
+        return correcto;
+
+    }
+
+
+
+    //todo borrar estos 2 metodos
     public static void escribeSocket(Socket p_sk, String alias, String usu, String contra) {
 
         String datos = "";
@@ -1336,19 +1638,19 @@ class FWQ_Visitor {
     public static void activarEncriptacion(Boolean activar){
         activarEncriptacion = activar;
 
-        System.out.println(activarEncriptacion);
+        System.out.println("por aquuuuuuuui " + activarEncriptacion);
     }
 }
 
 
-class logOut extends JFrame {
+class logOutApi extends JFrame {
 
     private JButton log;
     private JButton prueba;
 
     private boolean salir = false;
 
-    public logOut() {
+    public logOutApi() {
         setTitle("Registro del parquee");
         setResizable(false);
         setSize(390, 220);
@@ -1386,9 +1688,11 @@ class logOut extends JFrame {
     }
 
     public boolean getSalir(){return salir;}
+
+
 }
 
-class inicio extends JFrame{
+class inicioApi extends  JFrame{
 
     private JButton iniciar;
     private JButton registrar;
@@ -1411,7 +1715,7 @@ class inicio extends JFrame{
     private JButton out;
     private boolean salir = false;
 
-    public inicio(){
+    public inicioApi(){
         setTitle("Bienvenido al parque PortAventura");
         setResizable(false);
         setSize(390, 220);
@@ -1475,7 +1779,6 @@ class inicio extends JFrame{
 
     private void entrarParque(ActionEvent e){
 
-
         if(alias != null) {
             alias.setVisible(false);
             txtAlias.setVisible(false);
@@ -1487,7 +1790,6 @@ class inicio extends JFrame{
                 registrarse.setVisible(false);
             }
         }
-
 
         if(modificarse != null){
             modificarse.setVisible(false);
@@ -1508,6 +1810,7 @@ class inicio extends JFrame{
         add(entrar);
         add(out);
         add(encriptar);
+
 
         alias.reshape(20, 55, 100, 20);
         txtAlias.reshape(120, 55, 100, 20);
@@ -1547,9 +1850,12 @@ class inicio extends JFrame{
         Runnable miRunnable = new Runnable() {
             @Override
             public void run() {
-                FWQ_Visitor probando = new FWQ_Visitor();
+                FWQ_VisitorApi probando = new FWQ_VisitorApi();
+
+                System.out.println("me meto por aqui");
 
                 if(encriptar.isSelected()){
+                    System.out.println("he seleccionado");
                     probando.activarEncriptacion(true);
                 }else {
                     probando.activarEncriptacion(false);
@@ -1565,22 +1871,25 @@ class inicio extends JFrame{
         Runnable miRunnable = new Runnable() {
             @Override
             public void run() {
-                //entrar.setVisible(false);
-                FWQ_Visitor probando = new FWQ_Visitor();
+                entrar.setVisible(false);
+
+                FWQ_VisitorApi probando = new FWQ_VisitorApi();
 
                 System.out.println(out.isEnabled());
                 out.setVisible(true);
+
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException t) {
                     t.printStackTrace();
                 }
-                //todo
+
                 if(txtAlias.getText() != "" && txtContra.getText() != "" && out.isEnabled()) {
                     //probando.recibirDatos(txtAlias.getText(), txtContra.getText());
                     String hasContra = doHashing(txtContra.getText());
                     probando.recibirDatos(txtAlias.getText(), hasContra);
                 }
+
             }
         };
         Thread hilo = new Thread(miRunnable);
@@ -1608,6 +1917,7 @@ class inicio extends JFrame{
             e.printStackTrace();
         }
 
+        System.out.println("el hash: " + hash);
 
         return hash;
     }
@@ -1654,7 +1964,6 @@ class inicio extends JFrame{
         txtContra.reshape(120, 95, 100, 20);
 
 
-
         registrarse = new JButton("REGISTRAR");
         add(registrarse);
         registrarse.reshape(20, 130, 100, 20);
@@ -1668,14 +1977,13 @@ class inicio extends JFrame{
     }
 
     private void registro(ActionEvent e){
-        FWQ_Visitor probando = new FWQ_Visitor();
+        FWQ_VisitorApi probando = new FWQ_VisitorApi();
 
         if(txtAlias.getText() != "" && txtContra.getText() != "") {
             //probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
             String hasContra = doHashing(txtContra.getText());
-            probando.registrar(txtAlias.getText(), txtNombre.getText(), hasContra);
+            probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
         }
-
     }
 
     private void modificarUsuario(ActionEvent e) {
@@ -1733,10 +2041,21 @@ class inicio extends JFrame{
     }
 
     private void modificar(ActionEvent e){
-        FWQ_Visitor probando = new FWQ_Visitor();
+        FWQ_VisitorApi probando = new FWQ_VisitorApi();
 
-        if(txtAlias.getText() != "" && txtContra.getText() != "") {
-            probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
+        if(txtAlias.getText() != "" ) {
+            if(txtNombre.getText() != "" && txtContra.getText() != ""){
+                probando.modificarUsuario(txtAlias.getText(), txtNombre.getText(),txtContra.getText());
+            }else{
+                if(txtNombre.getText() != ""){
+                    probando.modificarUsuario(txtAlias.getText(), txtNombre.getText(),"");
+                }else{
+                    if(txtContra.getText() != ""){
+                        probando.modificarUsuario(txtAlias.getText(), "",txtContra.getText());
+                    }
+                }
+            }
+            //probando.registrar(txtAlias.getText(), txtNombre.getText(), txtContra.getText());
         }
     }
 }

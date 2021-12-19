@@ -11,6 +11,10 @@ public class FWQ_Sensor {
 
     //holaaa
 
+    private static int contador = 0;
+    private static int numFijo = 0;
+    private static int numNum = 0;
+
     public static void main(String[] args){
 
         /*
@@ -90,8 +94,6 @@ public class FWQ_Sensor {
         System.out.println("2. Enviar cada 1/3 segundos visitantes aleatorios");
         opcion = scan.nextInt();
 
-
-
         String datos = "";
         datos += hostKafka;
         datos += ":";
@@ -138,18 +140,35 @@ public class FWQ_Sensor {
         int numero = 0;
 
         if(opcion == 1){
-            Scanner scan = new Scanner(System.in);
-            System.out.print("Introduce el numero de visitantes: ");
-            numero = scan.nextInt();
+            //todo si mete opcion 1 llamar a una funcion que vaya sumando 1 y restando 1 para que no
+            //se vaya mandando todo el rato el mismo numero y sepa si ha caido o no
+            if(contador == 0) {
+                System.out.print("Introduce el numero de visitantes: ");
+                Scanner scan = new Scanner(System.in);
+                numero = scan.nextInt();
+                numNum = numero;
+            }else{
+                numFijo++;
+                if(numFijo % 2 == 0){
+                    numero = numNum + 1;
+                }else{
+                    numero = numNum - 1;
+                }
+            }
+            contador ++;
+
         }else if(opcion == 2){
             numero = (int)(Math.random()*100+25);
         }
 
         System.out.println(numero);
 
+        tiempo = "";
+
         tiempo += id;
         tiempo += ":";
         tiempo += numero;
+
 
         productor.send(new ProducerRecord<String, String>("sensores", "keyA", tiempo));
 

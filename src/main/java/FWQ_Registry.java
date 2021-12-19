@@ -54,7 +54,6 @@ public class FWQ_Registry {
         for(Document document : documents) {
             alias = document.get("alias").toString();
             nombre = document.get("nombre").toString();
-
             credence.put(alias,"");
         }
 
@@ -78,7 +77,6 @@ public class FWQ_Registry {
         }
 
         //docu.findOneAndUpdate();
-
         for(String datos : credence.keySet()) {
             if(credenciales[0].equals(datos)) {
                 solution = true;

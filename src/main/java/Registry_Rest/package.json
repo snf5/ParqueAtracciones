@@ -1,0 +1,34 @@
+{
+  "name": "registry_rest",
+  "version": "1.0.0",
+  "description": "API REST of Registry",
+  "main": "API_Registry",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "startRegistry": "node API_Registry.js"
+  },
+  "keywords": [
+    "CRUD",
+    "WS",
+    "REST",
+    "node",
+    "express",
+    "mongo"
+  ],
+  "author": "PacoNavarro",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "journey": "^0.4.0-pre-3",
+    "mongodb": "^4.2.1",
+    "mongojs": "^3.1.0",
+    "mongoose": "^6.0.14",
+    "morgan": "^1.10.0",
+    "node-fetch": "^3.1.0",
+    "request": "^2.88.2"
+  }
+}
